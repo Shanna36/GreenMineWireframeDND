@@ -1,14 +1,6 @@
 using UnityEngine;
 
-public enum MachineType
-{
-    Sorting,
-    Optical,
-    EddyCurrent,
-    Magnet,
-    Ballistic,
-    Baler
-}
+
 
 [System.Serializable]
 public class MachineOption
