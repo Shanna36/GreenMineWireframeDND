@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a9955d5b3e1c943f682074adce27da1a, type: 3}
+  m_Name: SortingPremium
+  m_EditorClassIdentifier: 
+  machineName: Sorting_Premium
+  machineType: 5
+  tier: 3
+  cost: 6000
+  throughputTonnesPerHour: 5
+  contaminationPercent: 0.01
+  machinePrefab: {fileID: 5436052027268448680, guid: e5466cdcbce3842609c3e17fc570bff0, type: 3}
