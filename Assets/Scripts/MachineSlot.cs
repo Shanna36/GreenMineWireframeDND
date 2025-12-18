@@ -6,7 +6,7 @@ using UnityEngine;
 public class MachineOption
 {
     public string displayName;   // Shown in UI, optional
-    public GameObject prefab;    // Machine model to spawn
+    public MachineConfig config;   // changed to scriptable object reference
 }
 
 public class MachineSlot : MonoBehaviour
@@ -68,16 +68,22 @@ public class MachineSlot : MonoBehaviour
 
         MachineOption option = options[index];
 
-        if (option.prefab == null)
+        if (option.config == null)
         {
-            Debug.LogWarning($"[MachineSlot] Option {index} on {name} has no prefab assigned.");
+            Debug.LogWarning($"[MachineSlot] Option {index} on {name} has no MachineConfig assigned.");
+            return;
+        }
+
+        if (option.config.machinePrefab == null)
+        {
+            Debug.LogWarning($"[MachineSlot] MachineConfig '{option.config.name}' has no prefab assigned.");
             return;
         }
 
         Transform parent = spawnPoint != null ? spawnPoint : transform;
 
         currentMachineInstance = Instantiate(
-            option.prefab,
+            option.config.machinePrefab,
             parent.position,
             parent.rotation,
             parent
