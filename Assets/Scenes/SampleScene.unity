@@ -340,7 +340,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1144528310}
+      - m_Target: {fileID: 174853786}
         m_TargetAssemblyTypeName: MachineSlot, Assembly-CSharp
         m_MethodName: SelectPremium
         m_Mode: 1
@@ -473,7 +473,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1144528310}
+      - m_Target: {fileID: 1920504577}
         m_TargetAssemblyTypeName: MachineSlot, Assembly-CSharp
         m_MethodName: SelectBasic
         m_Mode: 1
@@ -523,6 +523,84 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 68811230}
   m_CullTransparentMesh: 1
+--- !u!1 &174853784
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 174853787}
+  - component: {fileID: 174853786}
+  - component: {fileID: 174853785}
+  m_Layer: 0
+  m_Name: SortingSlot Container
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!65 &174853785
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 174853784}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 4.0564566, y: 1, z: 5.288222}
+  m_Center: {x: -0.63702726, y: 0, z: 0.48903918}
+--- !u!114 &174853786
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 174853784}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b030354564fae457490ca3b532984329, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hoverMenu: {fileID: 2090206915}
+  machineType: 0
+  spawnPoint: {fileID: 1508783684}
+  options:
+  - displayName: SortingBasic
+    config: {fileID: 11400000, guid: b692445e400804d92bca5d78f156c344, type: 2}
+  - displayName: SortingMedium
+    config: {fileID: 11400000, guid: 2adca3d247b1546178a1a41222cc4c7a, type: 2}
+  - displayName: SortingPremium
+    config: {fileID: 11400000, guid: 05bec35cbf1fc4014a232f0f1242f30f, type: 2}
+--- !u!4 &174853787
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 174853784}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -9.18, y: 1.75, z: -7.1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1144528309}
+  - {fileID: 1662128618}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &267263235
 GameObject:
   m_ObjectHideFlags: 0
@@ -950,7 +1028,7 @@ GameObject:
   - component: {fileID: 307286878}
   - component: {fileID: 307286877}
   m_Layer: 0
-  m_Name: SelectionPopups (1)
+  m_Name: SelectionPopups Magnetic
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -995,7 +1073,7 @@ MonoBehaviour:
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 1
-  m_PresetInfoIsWorld: 0
+  m_PresetInfoIsWorld: 1
 --- !u!223 &307286879
 Canvas:
   m_ObjectHideFlags: 0
@@ -1005,8 +1083,8 @@ Canvas:
   m_GameObject: {fileID: 307286876}
   m_Enabled: 1
   serializedVersion: 3
-  m_RenderMode: 0
-  m_Camera: {fileID: 0}
+  m_RenderMode: 2
+  m_Camera: {fileID: 330585545}
   m_PlaneDistance: 100
   m_PixelPerfect: 0
   m_ReceivesEvents: 1
@@ -1026,19 +1104,19 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 307286876}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: -1.4599999}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 468479752}
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1920504578}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 804.37, y: 324.25}
+  m_SizeDelta: {x: 1630, y: 652}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -1677,7 +1755,7 @@ GameObject:
   - component: {fileID: 468479754}
   - component: {fileID: 468479753}
   m_Layer: 0
-  m_Name: SortingPopupMenu
+  m_Name: MagnetPopupMenu
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1864,7 +1942,7 @@ GameObject:
   - component: {fileID: 644738637}
   - component: {fileID: 644738636}
   m_Layer: 0
-  m_Name: SelectionPopups
+  m_Name: SelectionPopupsSorting
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1909,7 +1987,7 @@ MonoBehaviour:
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 1
-  m_PresetInfoIsWorld: 0
+  m_PresetInfoIsWorld: 1
 --- !u!223 &644738638
 Canvas:
   m_ObjectHideFlags: 0
@@ -1919,8 +1997,8 @@ Canvas:
   m_GameObject: {fileID: 644738635}
   m_Enabled: 1
   serializedVersion: 3
-  m_RenderMode: 0
-  m_Camera: {fileID: 0}
+  m_RenderMode: 2
+  m_Camera: {fileID: 330585545}
   m_PlaneDistance: 100
   m_PixelPerfect: 0
   m_ReceivesEvents: 1
@@ -1940,19 +2018,19 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 644738635}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 7.1}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 2090206916}
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1662128618}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: 0}
-  m_Pivot: {x: 0, y: 0}
+  m_AnchoredPosition: {x: 824.18, y: 323.25}
+  m_SizeDelta: {x: 1630, y: 652}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &677286871
 GameObject:
   m_ObjectHideFlags: 0
@@ -2036,7 +2114,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1144528310}
+      - m_Target: {fileID: 174853786}
         m_TargetAssemblyTypeName: MachineSlot, Assembly-CSharp
         m_MethodName: SelectMedium
         m_Mode: 1
@@ -2307,7 +2385,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1144528310}
+      - m_Target: {fileID: 1920504577}
         m_TargetAssemblyTypeName: MachineSlot, Assembly-CSharp
         m_MethodName: SelectPremium
         m_Mode: 1
@@ -2489,7 +2567,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1144528310}
+      - m_Target: {fileID: 1920504577}
         m_TargetAssemblyTypeName: MachineSlot, Assembly-CSharp
         m_MethodName: SelectMedium
         m_Mode: 1
@@ -2878,8 +2956,6 @@ GameObject:
   - component: {fileID: 1144528309}
   - component: {fileID: 1144528308}
   - component: {fileID: 1144528307}
-  - component: {fileID: 1144528306}
-  - component: {fileID: 1144528310}
   m_Layer: 0
   m_Name: SortingSlot
   m_TagString: Untagged
@@ -2887,27 +2963,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!65 &1144528306
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1144528305}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1.3312525, y: 1.7979972, z: 1.3339717}
-  m_Center: {x: -0.00000021329696, y: -0.111237735, z: 0.36639568}
 --- !u!23 &1144528307
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -2969,36 +3024,14 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1144528305}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0.7071068, z: 0, w: 0.7071068}
-  m_LocalPosition: {x: -10.9, y: 0.74, z: -5.6}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalRotation: {x: -0, y: 0.7071068, z: -0, w: 0.7071068}
+  m_LocalPosition: {x: -2.1999998, y: -1.01, z: 1.5}
+  m_LocalScale: {x: 6.2, y: 0.34, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1508783684}
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 174853787}
   m_LocalEulerAnglesHint: {x: 0, y: 90, z: 0}
---- !u!114 &1144528310
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1144528305}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b030354564fae457490ca3b532984329, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  hoverMenu: {fileID: 2090206915}
-  machineType: 0
-  spawnPoint: {fileID: 1508783684}
-  options:
-  - displayName: SortingBasic
-    config: {fileID: 11400000, guid: b692445e400804d92bca5d78f156c344, type: 2}
-  - displayName: SortingMedium
-    config: {fileID: 11400000, guid: 2adca3d247b1546178a1a41222cc4c7a, type: 2}
-  - displayName: SortingPremium
-    config: {fileID: 11400000, guid: 05bec35cbf1fc4014a232f0f1242f30f, type: 2}
 --- !u!1 &1508783683
 GameObject:
   m_ObjectHideFlags: 0
@@ -3054,12 +3087,44 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1577893803}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.8199997, y: 0, z: 0.5400001}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1872224453}
+  m_Father: {fileID: 1920504578}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &1662128617
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1662128618}
+  m_Layer: 0
+  m_Name: PopupMenuAnchor
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1662128618
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1662128617}
+  serializedVersion: 2
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0, y: 1, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 644738639}
+  m_Father: {fileID: 174853787}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1872224449
 GameObject:
@@ -3072,8 +3137,6 @@ GameObject:
   - component: {fileID: 1872224453}
   - component: {fileID: 1872224452}
   - component: {fileID: 1872224451}
-  - component: {fileID: 1872224450}
-  - component: {fileID: 1872224454}
   m_Layer: 0
   m_Name: MagnetSlot
   m_TagString: Untagged
@@ -3081,27 +3144,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!65 &1872224450
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1872224449}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1.7891006, y: 2.1439304, z: 1.5116042}
-  m_Center: {x: -0.083299056, y: -0.5719658, z: 0.030355603}
 --- !u!23 &1872224451
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -3163,36 +3205,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1872224449}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 14, y: 1.36, z: 2}
-  m_LocalScale: {x: 3.96, y: 0.69, z: 7.03}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -0.8199997, y: -0.94, z: 0.5400001}
+  m_LocalScale: {x: 2.42, y: 1, z: 5.65}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 1577893804}
-  m_Father: {fileID: 0}
+  m_Children: []
+  m_Father: {fileID: 1920504578}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1872224454
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1872224449}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b030354564fae457490ca3b532984329, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  hoverMenu: {fileID: 0}
-  machineType: 3
-  spawnPoint: {fileID: 1577893804}
-  options:
-  - displayName: BasicOverbandMagnet
-    config: {fileID: 11400000, guid: 5617ba076990842c6b6c4d60ec144350, type: 2}
-  - displayName: MediumDrumMagnet
-    config: {fileID: 11400000, guid: 4ee199c72d5474b2c93806f302dca196, type: 2}
-  - displayName: PremiumDualMagnet
-    config: {fileID: 11400000, guid: 4524035164f2a4a2cba0a18b2d495bdb, type: 2}
 --- !u!1 &1874953602
 GameObject:
   m_ObjectHideFlags: 0
@@ -3276,7 +3295,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1144528310}
+      - m_Target: {fileID: 174853786}
         m_TargetAssemblyTypeName: MachineSlot, Assembly-CSharp
         m_MethodName: SelectBasic
         m_Mode: 1
@@ -3326,6 +3345,85 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1874953602}
   m_CullTransparentMesh: 1
+--- !u!1 &1920504576
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1920504578}
+  - component: {fileID: 1920504577}
+  - component: {fileID: 1920504579}
+  m_Layer: 0
+  m_Name: MagnetSlotContainer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1920504577
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1920504576}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b030354564fae457490ca3b532984329, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  hoverMenu: {fileID: 468479751}
+  machineType: 3
+  spawnPoint: {fileID: 1577893804}
+  options:
+  - displayName: BasicOverbandMagnet
+    config: {fileID: 11400000, guid: 5617ba076990842c6b6c4d60ec144350, type: 2}
+  - displayName: MediumDrumMagnet
+    config: {fileID: 11400000, guid: 4ee199c72d5474b2c93806f302dca196, type: 2}
+  - displayName: PremiumDualMagnet
+    config: {fileID: 11400000, guid: 4524035164f2a4a2cba0a18b2d495bdb, type: 2}
+--- !u!4 &1920504578
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1920504576}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 10.63, y: 1.75, z: 1.4599999}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children:
+  - {fileID: 1577893804}
+  - {fileID: 1872224453}
+  - {fileID: 307286880}
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &1920504579
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1920504576}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 3.8028822, y: 2.0616925, z: 8.55852}
+  m_Center: {x: 1.4014411, y: 0.53084624, z: 0.48130322}
 --- !u!1 &1980618094
 GameObject:
   m_ObjectHideFlags: 0
@@ -3431,7 +3529,7 @@ Transform:
   m_GameObject: {fileID: 1980618094}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -5.6, y: 0.62, z: -5.54}
+  m_LocalPosition: {x: 9.65, y: 0.62, z: -5.54}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3537,12 +3635,10 @@ SceneRoots:
   - {fileID: 1980618099}
   - {fileID: 927623058}
   - {fileID: 973380040}
-  - {fileID: 307286880}
-  - {fileID: 1872224453}
   - {fileID: 419719808}
   - {fileID: 643933328}
   - {fileID: 1046921314}
-  - {fileID: 1144528309}
   - {fileID: 356975899}
-  - {fileID: 644738639}
   - {fileID: 1082354536}
+  - {fileID: 1920504578}
+  - {fileID: 174853787}
