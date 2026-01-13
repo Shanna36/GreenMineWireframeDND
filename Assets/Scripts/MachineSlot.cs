@@ -24,6 +24,12 @@ public class MachineSlot : MonoBehaviour
     private GameObject currentMachineInstance;
     private int currentIndex = -1;           // For quick cycling in tests
 
+    private void Start()
+    {
+        // Guarantee a consistent starting state even if the menu is left enabled in the editor.
+        SetMenuVisible(false);
+    }
+
     /// <summary>
     /// Show or hide the selection menu and manage cursor.
     /// </summary>

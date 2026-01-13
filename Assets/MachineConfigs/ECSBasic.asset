@@ -10,12 +10,12 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a9955d5b3e1c943f682074adce27da1a, type: 3}
-  m_Name: BallisticPremium
+  m_Name: ECSBasic
   m_EditorClassIdentifier: 
-  machineName: BallisticPremium
-  machineType: 2
-  tier: 3
-  cost: 4500
-  throughputTonnesPerHour: 35
-  contaminationPercent: 0
-  machinePrefab: {fileID: 8070050480944687898, guid: f39b5632ce1654f62ba9c8a9df24ce50, type: 3}
+  machineName: ECSBasic
+  machineType: 1
+  tier: 1
+  cost: 600
+  throughputTonnesPerHour: 10
+  contaminationPercent: 0.15
+  machinePrefab: {fileID: 115010140785676813, guid: a3a595010297a4a0a90332402a6a4da4, type: 3}

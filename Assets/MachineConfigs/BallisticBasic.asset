@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a9955d5b3e1c943f682074adce27da1a, type: 3}
   m_Name: BallisticBasic
   m_EditorClassIdentifier: 
-  machineName: 
-  machineType: 0
-  tier: 0
-  cost: 0
-  throughputTonnesPerHour: 0
-  contaminationPercent: 0
-  machinePrefab: {fileID: 0}
+  machineName: BallisticBasic
+  machineType: 2
+  tier: 1
+  cost: 700
+  throughputTonnesPerHour: 10
+  contaminationPercent: 0.2
+  machinePrefab: {fileID: 3228346665953777113, guid: 54ec76de32ac8418582cad015217d782, type: 3}
