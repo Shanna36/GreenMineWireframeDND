@@ -16,6 +16,6 @@ MonoBehaviour:
   machineType: 3
   tier: 1
   cost: 800
-  throughputTonnesPerHour: 1
+  throughputTonnesPerHour: 10
   contaminationPercent: 0.15
   machinePrefab: {fileID: 9090250455228716792, guid: f45e6a54280434ce2a9e39cba32d563c, type: 3}
