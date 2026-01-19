@@ -34,6 +34,10 @@ public class MachineConfig : ScriptableObject
     public float throughputTonnesPerHour;
     public float contaminationPercent;
 
+    // Convenience alias used by systems that expect throughput in tonnes/hour.
+    // Keeps older/newer naming consistent across scripts.
+    public float ThroughputTPH => throughputTonnesPerHour;
+
     // ------------------------
     // Visuals
     // ------------------------

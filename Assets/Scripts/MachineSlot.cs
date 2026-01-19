@@ -1,4 +1,7 @@
 using UnityEngine;
+using UnityEngine.EventSystems;
+using System;
+using System.Reflection;
 
 
 
@@ -7,6 +10,7 @@ public class MachineOption
 {
     public string displayName;   // Shown in UI, optional
     public MachineConfig config;   // changed to scriptable object reference
+    
 }
 
 public class MachineSlot : MonoBehaviour
@@ -24,9 +28,67 @@ public class MachineSlot : MonoBehaviour
     private GameObject currentMachineInstance;
     private int currentIndex = -1;           // For quick cycling in tests
 
+    // Fired whenever the player selects/changes the machine option for this slot.
+    public event Action<MachineSlot> OnSelectionChanged;
+
+    // --- Throughput Aggregator helpers ---
+
+    // True if a valid MachineConfig is currently selected for this slot.
+    public bool HasMachineInstalled => CurrentConfig != null;
+
+    // v1: always operational. Later you can wire breakdowns/maintenance into this.
+    public bool IsOperational => true;
+
+    // The currently selected MachineConfig (or null if none selected).
+    public MachineConfig CurrentConfig
+    {
+        get
+        {
+            if (options == null || options.Length == 0) return null;
+            if (currentIndex < 0 || currentIndex >= options.Length) return null;
+            return options[currentIndex]?.config;
+        }
+    }
+
+    // Current throughput in tonnes per hour for the selected option.
+    public float CurrentThroughputTPH
+    {
+        get
+        {
+            var cfg = CurrentConfig;
+            if (cfg == null) return 0f;
+
+            // Try common property/field names without forcing a specific MachineConfig implementation.
+            // This prevents compile errors if the field name differs.
+            Type t = cfg.GetType();
+
+            // Properties (PascalCase)
+            PropertyInfo p;
+            p = t.GetProperty("ThroughputTPH", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (p != null && p.PropertyType == typeof(float)) return (float)p.GetValue(cfg);
+
+            p = t.GetProperty("throughputTPH", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (p != null && p.PropertyType == typeof(float)) return (float)p.GetValue(cfg);
+
+            // Fields (camelCase)
+            FieldInfo f;
+            f = t.GetField("throughputTPH", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (f != null && f.FieldType == typeof(float)) return (float)f.GetValue(cfg);
+
+            f = t.GetField("throughputTph", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (f != null && f.FieldType == typeof(float)) return (float)f.GetValue(cfg);
+
+            f = t.GetField("throughput", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (f != null && f.FieldType == typeof(float)) return (float)f.GetValue(cfg);
+
+            // If we can't find a matching member, default to 0.
+            return 0f;
+        }
+    }
+
     private void Start()
     {
-        // Guarantee a consistent starting state even if the menu is left enabled in the editor.
+        // Ensure a consistent initial state even if the menu is left enabled in the editor.
         SetMenuVisible(false);
     }
 
@@ -97,6 +159,9 @@ public class MachineSlot : MonoBehaviour
 
         currentIndex = index;
 
+        // Notify any listeners (e.g., a ThroughputAggregator) that this slot's selection changed.
+        OnSelectionChanged?.Invoke(this);
+
         // If the prefab has a Machine component, we can initialise it here later.
         // var machine = currentMachineInstance.GetComponent<Machine>();
         // if (machine != null) machine.Initialise(machineType, this);
@@ -128,6 +193,10 @@ public class MachineSlot : MonoBehaviour
     /// </summary>
     private void OnMouseDown()
     {
+        // If clicking UI (e.g., the popup buttons), don't also toggle the slot menu.
+        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+            return;
+
         if (hoverMenu == null)
             return;
 
