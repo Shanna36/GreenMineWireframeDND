@@ -3,14 +3,11 @@ using UnityEngine.EventSystems;
 using System;
 using System.Reflection;
 
-
-
 [System.Serializable]
 public class MachineOption
 {
     public string displayName;   // Shown in UI, optional
-    public MachineConfig config;   // changed to scriptable object reference
-    
+    public MachineConfig config; // ScriptableObject reference
 }
 
 public class MachineSlot : MonoBehaviour
@@ -23,10 +20,10 @@ public class MachineSlot : MonoBehaviour
     public Transform spawnPoint;             // Where the chosen machine will appear
 
     [Header("Available Options (3 per slot)")]
-    public MachineOption[] options;          // Assign 3 prefabs in the Inspector
+    public MachineOption[] options;          // Assign 3 options in the Inspector
 
     private GameObject currentMachineInstance;
-    private int currentIndex = -1;           // For quick cycling in tests
+    private int currentIndex = -1;           // Selected option index
 
     // Fired whenever the player selects/changes the machine option for this slot.
     public event Action<MachineSlot> OnSelectionChanged;
@@ -51,6 +48,7 @@ public class MachineSlot : MonoBehaviour
     }
 
     // Current throughput in tonnes per hour for the selected option.
+    // Uses reflection as a safety net so you don't have to perfectly align field names during refactors.
     public float CurrentThroughputTPH
     {
         get
@@ -58,30 +56,28 @@ public class MachineSlot : MonoBehaviour
             var cfg = CurrentConfig;
             if (cfg == null) return 0f;
 
-            // Try common property/field names without forcing a specific MachineConfig implementation.
-            // This prevents compile errors if the field name differs.
             Type t = cfg.GetType();
 
-            // Properties (PascalCase)
-            PropertyInfo p;
-            p = t.GetProperty("ThroughputTPH", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            // Prefer the standardized property we added to MachineConfig.
+            PropertyInfo p = t.GetProperty("ThroughputTPH", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             if (p != null && p.PropertyType == typeof(float)) return (float)p.GetValue(cfg);
 
+            // Fallbacks (in case you rename things later)
             p = t.GetProperty("throughputTPH", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             if (p != null && p.PropertyType == typeof(float)) return (float)p.GetValue(cfg);
 
-            // Fields (camelCase)
-            FieldInfo f;
-            f = t.GetField("throughputTPH", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            FieldInfo f = t.GetField("throughputTPH", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             if (f != null && f.FieldType == typeof(float)) return (float)f.GetValue(cfg);
 
             f = t.GetField("throughputTph", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             if (f != null && f.FieldType == typeof(float)) return (float)f.GetValue(cfg);
 
+            f = t.GetField("throughputTonnesPerHour", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            if (f != null && f.FieldType == typeof(float)) return (float)f.GetValue(cfg);
+
             f = t.GetField("throughput", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
             if (f != null && f.FieldType == typeof(float)) return (float)f.GetValue(cfg);
 
-            // If we can't find a matching member, default to 0.
             return 0f;
         }
     }
@@ -92,17 +88,13 @@ public class MachineSlot : MonoBehaviour
         SetMenuVisible(false);
     }
 
-    /// <summary>
-    /// Show or hide the selection menu and manage cursor.
-    /// </summary>
     private void SetMenuVisible(bool isVisible)
     {
-        if (hoverMenu == null)
-            return;
+        if (hoverMenu == null) return;
 
         hoverMenu.SetActive(isVisible);
 
-        // For now, keep the cursor visible and unlocked either way while testing.
+        // While testing UI, keep cursor visible/unlocked.
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
     }
@@ -159,61 +151,38 @@ public class MachineSlot : MonoBehaviour
 
         currentIndex = index;
 
-        // Notify any listeners (e.g., a ThroughputAggregator) that this slot's selection changed.
+        // Notify listeners (e.g., ThroughputAggregator) that this slot's selection changed.
         OnSelectionChanged?.Invoke(this);
-
-        // If the prefab has a Machine component, we can initialise it here later.
-        // var machine = currentMachineInstance.GetComponent<Machine>();
-        // if (machine != null) machine.Initialise(machineType, this);
     }
 
     public void SelectBasic()
     {
-        Debug.Log($"[MachineSlot] SelectBasic called on {name}");
         SelectOption(0);
         SetMenuVisible(false);
     }
 
     public void SelectMedium()
     {
-        Debug.Log($"[MachineSlot] SelectMedium called on {name}");
         SelectOption(1);
         SetMenuVisible(false);
     }
 
     public void SelectPremium()
     {
-        Debug.Log($"[MachineSlot] SelectPremium called on {name}");
         SelectOption(2);
         SetMenuVisible(false);
     }
 
-    /// <summary>
-    /// Clicking the slot toggles the selection menu on and off.
-    /// </summary>
     private void OnMouseDown()
     {
-        // If clicking UI (e.g., the popup buttons), don't also toggle the slot menu.
+        // If clicking UI (e.g., popup buttons), don't also toggle the slot menu.
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
             return;
 
-        if (hoverMenu == null)
-            return;
+        if (hoverMenu == null) return;
 
         bool newState = !hoverMenu.activeSelf;
         SetMenuVisible(newState);
         Debug.Log($"[MachineSlot] OnMouseDown fired on: {name}, menu state: {newState}");
-    }
-
-    private void OnMouseEnter()
-    {
-        Debug.Log($"[MachineSlot] OnMouseEnter fired on: {name}");
-        // Hover no longer controls menu visibility.
-    }
-
-    private void OnMouseExit()
-    {
-        Debug.Log($"[MachineSlot] OnMouseExit fired on: {name}");
-        // Hover no longer controls menu visibility.
     }
 }

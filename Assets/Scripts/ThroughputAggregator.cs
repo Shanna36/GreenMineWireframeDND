@@ -21,9 +21,31 @@ public class ThroughputAggregator : MonoBehaviour
 
     public event Action<float> OnThroughputChanged; // passes new EffectiveThroughputTPH
 
+    [Header("Debug")]
+    [Tooltip("If enabled, logs effective throughput and derived rates when Recalculate() runs.")]
+    public bool debugLog = true;
+
+    [Tooltip("How often (in seconds) to refresh the throughput calculation + debug log while playing.")]
+    public float debugLogInterval = 1f;
+
+    private float _nextDebugTime = 0f;
+
     private void Awake()
     {
         Recalculate();
+    }
+
+    private void Update()
+    {
+        if (!debugLog) return;
+        if (!Application.isPlaying) return;
+
+        // Recalculate periodically so the log reflects selections made after the scene starts.
+        if (Time.time >= _nextDebugTime)
+        {
+            _nextDebugTime = Time.time + Mathf.Max(0.1f, debugLogInterval);
+            Recalculate();
+        }
     }
 
     /// <summary>
@@ -75,6 +97,15 @@ public class ThroughputAggregator : MonoBehaviour
         // Convert to tonnes per real second (for smooth filling)
         // TonnesPerRealSecond = TonnesPerSimDay / secondsPerGameDay
         TonnesPerRealSecond = (secondsPerGameDay > 0f) ? (TonnesPerSimDay / secondsPerGameDay) : 0f;
+
+        if (debugLog)
+        {
+            Debug.Log(
+                $"[ThroughputAggregator] EffectiveThroughputTPH={EffectiveThroughputTPH:0.###} t/h | " +
+                $"TonnesPerSimDay={TonnesPerSimDay:0.###} t/day (simHours={simulatedHoursPerDay:0.###}) | " +
+                $"TonnesPerRealSecond={TonnesPerRealSecond:0.#####} t/s (secondsPerGameDay={secondsPerGameDay:0.###})"
+            );
+        }
 
         // Notify listeners if it changed meaningfully
         if (!Mathf.Approximately(previous, EffectiveThroughputTPH))
