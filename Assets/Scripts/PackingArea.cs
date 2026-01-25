@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro; // Optional; remove if you're not using TextMeshPro
+using TMPro; 
 
 public class PackingArea : MonoBehaviour
 {
@@ -19,12 +19,12 @@ public class PackingArea : MonoBehaviour
         [Tooltip("Max tonnes this hopper can hold before blocking the line.")]
         public float capacityTonnes = 2f;
 
-        private float currentTonnes = 0f; // cosmetic attribute; if ReadOnly isn't defined, Unity ignores it
+        private float currentTonnes = 0f; // cosmetic attribute; if float isn't defined, Unity ignores it
 
         [Header("UI (optional)")]
         public Slider slider;
-        public TMP_Text label;   // optional
-        public Button shipButton; // optional
+        public TMP_Text label;   
+        public Button shipButton; 
 
         public bool IsFull => capacityTonnes > 0f && currentTonnes >= capacityTonnes - 1e-6f;
 
