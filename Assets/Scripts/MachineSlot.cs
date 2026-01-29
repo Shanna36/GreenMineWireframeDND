@@ -82,6 +82,42 @@ public class MachineSlot : MonoBehaviour
         }
     }
 
+    // --- Purchasing helpers ---
+
+    // Reads a cost value from MachineConfig using reflection so field/property names can evolve safely.
+    private int GetCost(MachineConfig cfg)
+    {
+        if (cfg == null) return 0;
+
+        Type t = cfg.GetType();
+
+        // Property: Cost
+        PropertyInfo p = t.GetProperty("Cost", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        if (p != null && p.PropertyType == typeof(int)) return (int)p.GetValue(cfg);
+
+        // Property: cost
+        p = t.GetProperty("cost", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        if (p != null && p.PropertyType == typeof(int)) return (int)p.GetValue(cfg);
+
+        // Field: cost
+        FieldInfo f = t.GetField("cost", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        if (f != null && f.FieldType == typeof(int)) return (int)f.GetValue(cfg);
+
+        // Field: Cost
+        f = t.GetField("Cost", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+        if (f != null && f.FieldType == typeof(int)) return (int)f.GetValue(cfg);
+
+        return 0;
+    }
+
+    private string GetMachineLabel(MachineOption option)
+    {
+        if (option == null) return "Machine";
+        if (!string.IsNullOrWhiteSpace(option.displayName)) return option.displayName;
+        if (option.config != null) return option.config.name;
+        return "Machine";
+    }
+
     private void Start()
     {
         // Ensure a consistent initial state even if the menu is left enabled in the editor.
@@ -119,13 +155,6 @@ public class MachineSlot : MonoBehaviour
             return;
         }
 
-        // Destroy any previous machine
-        if (currentMachineInstance != null)
-        {
-            Destroy(currentMachineInstance);
-            currentMachineInstance = null;
-        }
-
         MachineOption option = options[index];
 
         if (option.config == null)
@@ -138,6 +167,45 @@ public class MachineSlot : MonoBehaviour
         {
             Debug.LogWarning($"[MachineSlot] MachineConfig '{option.config.name}' has no prefab assigned.");
             return;
+        }
+
+        // --- Purchase check (non-disruptive) ---
+        // We only charge when installing the first machine, or when upgrading to a more expensive option.
+        // Downgrades do not refund in v1.
+        int newCost = GetCost(option.config);
+        int oldCost = GetCost(CurrentConfig);
+        int upgradeCost = Mathf.Max(0, newCost - oldCost);
+
+        // If selecting the same option again, do nothing.
+        if (index == currentIndex)
+        {
+            Debug.Log($"[MachineSlot] Option {index} already selected on {name}. No action taken.");
+            return;
+        }
+
+        // If there is a cost to pay, require MoneyManager.
+        if (upgradeCost > 0)
+        {
+            if (MoneyManager.Instance == null)
+            {
+                Debug.LogError($"[MachineSlot] Cannot purchase '{GetMachineLabel(option)}' because MoneyManager.Instance is null.");
+                return;
+            }
+
+            // If we can't afford it, do NOT change the current machine.
+            bool paid = MoneyManager.Instance.TryPurchase(upgradeCost, GetMachineLabel(option));
+            if (!paid)
+            {
+                Debug.Log($"[MachineSlot] Not enough funds to purchase '{GetMachineLabel(option)}' (cost {upgradeCost}).");
+                return;
+            }
+        }
+
+        // Destroy any previous machine (only after successful purchase)
+        if (currentMachineInstance != null)
+        {
+            Destroy(currentMachineInstance);
+            currentMachineInstance = null;
         }
 
         Transform parent = spawnPoint != null ? spawnPoint : transform;

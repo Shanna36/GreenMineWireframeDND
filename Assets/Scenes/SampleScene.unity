@@ -8300,7 +8300,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b030354564fae457490ca3b532984329, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hoverMenu: {fileID: 1104717146}
+  hoverMenu: {fileID: 2135410479}
   machineType: 3
   spawnPoint: {fileID: 1775347567}
   options:
@@ -9016,6 +9016,57 @@ RectTransform:
   m_AnchoredPosition: {x: -5, y: 0}
   m_SizeDelta: {x: -20, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &1544392999
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1544393001}
+  - component: {fileID: 1544393000}
+  m_Layer: 0
+  m_Name: MoneyManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1544393000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1544392999}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 427bfe157da7d4d59a0ab0ce30158065, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::MoneyManager
+  startingCoins: 5000
+  fibrePerTonne: 20
+  plasticsPerTonne: 40
+  steelPerTonne: 80
+  aluminiumPerTonne: 150
+  dumpCostPerDump: 500
+  valueLossPerPercent: 0.1
+--- !u!4 &1544393001
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1544392999}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0.5582, y: -0.23534, z: 1.01936}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1559062732
 GameObject:
   m_ObjectHideFlags: 0
@@ -12218,3 +12269,4 @@ SceneRoots:
   - {fileID: 344480787}
   - {fileID: 1224669351}
   - {fileID: 139081828}
+  - {fileID: 1544393001}

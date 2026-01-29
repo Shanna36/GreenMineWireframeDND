@@ -235,5 +235,6 @@ public class PackingArea : MonoBehaviour
 public enum TransactionType
 {
     Ship,
-    Dump
+    Dump,
+    Purchase
 }

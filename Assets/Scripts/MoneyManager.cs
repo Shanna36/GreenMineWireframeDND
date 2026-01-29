@@ -11,7 +11,7 @@ public enum MaterialType
 
 public class MoneyManager : MonoBehaviour
 {
-    public static MoneyManager Instance;
+    public static MoneyManager Instance { get; private set; }
 
     [Header("Starting Money")]
     public int startingCoins = 5000;
@@ -42,7 +42,9 @@ public class MoneyManager : MonoBehaviour
         }
 
         Instance = this;
+        DontDestroyOnLoad(gameObject);
         CurrentCoins = startingCoins;
+        OnBalanceChanged?.Invoke(CurrentCoins, 0, TransactionType.Purchase, "Init");
     }
 
     // -------- Purchasing --------
@@ -77,6 +79,11 @@ public class MoneyManager : MonoBehaviour
         CurrentCoins -= cost;
         OnBalanceChanged?.Invoke(CurrentCoins, -cost, type, label);
         return true;
+    }
+
+    public bool TryPurchase(int cost, string machineName)
+    {
+        return TrySpend(cost, TransactionType.Purchase, machineName);
     }
 
     public int SellBack(int purchasePrice, float resaleRate = 0.5f)
