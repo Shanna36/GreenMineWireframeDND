@@ -6991,7 +6991,7 @@ GameObject:
   - component: {fileID: 1104717148}
   - component: {fileID: 1104717147}
   m_Layer: 0
-  m_Name: MagnetPopupMenu
+  m_Name: ECSPopupMenu
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -8300,7 +8300,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b030354564fae457490ca3b532984329, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  hoverMenu: {fileID: 2135410479}
+  hoverMenu: {fileID: 1104717146}
   machineType: 3
   spawnPoint: {fileID: 1775347567}
   options:
@@ -11762,7 +11762,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 2064699064}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 356975895}
+        m_TargetAssemblyTypeName: 
+        m_MethodName: 
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: 
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &2064699064
 MonoBehaviour:
   m_ObjectHideFlags: 0
