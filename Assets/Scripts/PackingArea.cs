@@ -209,6 +209,20 @@ public class PackingArea : MonoBehaviour
 
     public bool TryDumpResidue() => DumpResidue();
 
+    /// <summary>
+    /// UI Button wrapper for dumping residue.
+    /// Unity's Button OnClick only lists void-returning methods in the inspector,
+    /// so this wrapper lets us call the bool-returning DumpResidue() from UI.
+    /// </summary>
+    public void DumpResidueClicked()
+    {
+        bool paid = DumpResidue();
+        if (!paid)
+        {
+            Debug.Log("DumpResidueClicked: Dump failed (insufficient funds or missing MoneyManager).");
+        }
+    }
+
     private MaterialType GetMaterialType(OutputType type)
     {
         // IMPORTANT: Adjust these mappings to match your project's MaterialType enum.
