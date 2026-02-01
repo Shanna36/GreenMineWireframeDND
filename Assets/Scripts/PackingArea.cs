@@ -69,7 +69,9 @@ public class PackingArea : MonoBehaviour
             if (shipButton != null)
             {
                 // v1 behaviour: only allow shipping when full.
-                shipButton.interactable = IsFull;
+                // Events can temporarily disable shipping (e.g. transport breakdown).
+                bool globallyDisabled = PackingArea.Instance != null && PackingArea.Instance.IsShippingDisabled;
+                shipButton.interactable = IsFull && !globallyDisabled;
             }
         }
     }
@@ -92,6 +94,19 @@ public class PackingArea : MonoBehaviour
     [SerializeField] private int dumpCostPerDump = 500;
 
     public bool IsBlocked { get; private set; }
+
+    // When true, all ship buttons are disabled regardless of hopper fullness.
+    // Used by the Events system (e.g. transport breakdown) to create a temporary dispatch bottleneck.
+    private bool shippingDisabled = false;
+
+    // If shippingDisabled is time-bound, this stores when shipping should be re-enabled.
+    // (Time.time in seconds)
+    private float shippingDisabledUntil = -1f;
+
+    /// <summary>
+    /// True when shipping is currently disabled by an event.
+    /// </summary>
+    public bool IsShippingDisabled => shippingDisabled;
 
     private void Awake()
     {
@@ -118,6 +133,12 @@ public class PackingArea : MonoBehaviour
     private void Update()
     {
         if (throughputAggregator == null) return;
+
+        // Auto-clear any timed shipping disable.
+        if (shippingDisabled && shippingDisabledUntil >= 0f && Time.time >= shippingDisabledUntil)
+        {
+            SetShippingDisabled(false);
+        }
 
         // Block rule
         IsBlocked = blockWhenAnyFull && AnyHopperFull();
@@ -157,6 +178,42 @@ public class PackingArea : MonoBehaviour
     }
 
     /// <summary>
+    /// Disable or enable all shipping buttons.
+    /// Used by events (e.g. transport breakdown) to temporarily prevent shipping.
+    /// </summary>
+    public void SetShippingDisabled(bool disabled)
+    {
+        shippingDisabled = disabled;
+        if (!disabled)
+        {
+            shippingDisabledUntil = -1f;
+        }
+
+        // Refresh immediately so buttons reflect the new state.
+        RefreshAllUI();
+    }
+
+    /// <summary>
+    /// Disable shipping for a fixed duration in seconds.
+    /// Calling this again extends the disable window.
+    /// </summary>
+    public void DisableShippingForSeconds(float seconds)
+    {
+        seconds = Mathf.Max(0f, seconds);
+        if (seconds <= 0f)
+        {
+            SetShippingDisabled(false);
+            return;
+        }
+
+        shippingDisabled = true;
+        shippingDisabledUntil = Mathf.Max(shippingDisabledUntil, Time.time + seconds);
+
+        // Refresh immediately so buttons disable right away.
+        RefreshAllUI();
+    }
+
+    /// <summary>
     /// Ship the specified hopper's contents.
     /// Clears the hopper and delegates payout to MoneyManager.
     /// </summary>
@@ -164,6 +221,13 @@ public class PackingArea : MonoBehaviour
     {
         var hopper = hoppers.Find(h => h != null && h.type == type);
         if (hopper == null) return;
+
+        // If shipping is disabled (e.g. a logistics event), do nothing.
+        if (shippingDisabled)
+        {
+            Debug.Log($"Ship blocked: shipping is temporarily disabled (event/logistics). ({type})");
+            return;
+        }
 
         // v1: only ship if full (matches button interactable)
         if (!hopper.IsFull) return;

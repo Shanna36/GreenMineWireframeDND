@@ -241,9 +241,10 @@ public class MachineSlot : MonoBehaviour
         SetMenuVisible(false);
     }
 
-    private void OnMouseDown()
+   private void OnMouseDown()
     {
         // If clicking UI (e.g., popup buttons), don't also toggle the slot menu.
+        Debug.Log($"[MachineSlot] Clicked {name}");
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
             return;
 

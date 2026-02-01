@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: f0ed8b7710060c747aa4d3a45711438e
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 272888
+  packageName: Low Poly Factory Machine Pack Vol 3
+  packageVersion: 1.0
+  assetPath: Assets/LowPoly Factory Machine Pack Vol 3/Scripts/OpenLinkOnButtonClick.cs
+  uploadId: 636491

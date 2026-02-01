@@ -1,0 +1,17 @@
+fileFormatVersion: 2
+guid: f6a7da44b92d98e4e9591db325bc849a
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  preprocessorOverride: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 272888
+  packageName: Low Poly Factory Machine Pack Vol 3
+  packageVersion: 1.0
+  assetPath: Assets/LowPoly Factory Machine Pack Vol 3/Shader/EKTextureAnimation.shader
+  uploadId: 636491
