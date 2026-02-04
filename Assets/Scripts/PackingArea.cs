@@ -268,7 +268,7 @@ public class PackingArea : MonoBehaviour
             return false;
         }
 
-        return MoneyManager.Instance.TrySpend(dumpCostPerDump, TransactionType.Dump, "Dump");
+        return MoneyManager.Instance.TrySpend(dumpCostPerDump, PayType.Dump, "Dump");
     }
 
     public bool TryDumpResidue() => DumpResidue();

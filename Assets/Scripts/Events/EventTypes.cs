@@ -4,7 +4,8 @@ using System;
 public enum EventType
 {
     LogisticsDelay,
-    // Later: TimedSafety, MaintenanceDegrade, HardStopRepair, ContaminationSpike
+    MaintenanceDegrade,
+    // Later: TimedSafety, HardStopRepair, ContaminationSpike
 }
 
 public enum TargetType

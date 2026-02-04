@@ -1,35 +1,45 @@
-// Assets/Scripts/Events/EventManager.cs
 using System.Collections;
 using UnityEngine;
 
 public class EventManager : MonoBehaviour
 {
-    [Header("Refs")]
+    [Header("References")]
     public EventPopupUI popupUI;
 
-    [Header("Debug")]
-    public bool enableDebugHotkey = true;
-    public KeyCode debugTriggerKey = KeyCode.L;
-    public EventDefinitionSO debugEvent;
+    [Header("Debug Hotkeys")]
+    public bool enableDebugHotkeys = true;
+
+    [Header("Debug: Logistics")]
+    public KeyCode logisticsTriggerKey = KeyCode.L;
+    public EventDefinitionSO logisticsDebugEvent;
+
+    [Header("Debug: Maintenance")]
+    public KeyCode maintenanceTriggerKey = KeyCode.M;
+    public EventDefinitionSO maintenanceDebugEvent;
 
     private Coroutine activeEventRoutine;
 
     private void Update()
     {
-        if (!enableDebugHotkey) return;
-        if (debugEvent == null) return;
+        if (!enableDebugHotkeys) return;
 
-        if (Input.GetKeyDown(debugTriggerKey))
+        if (logisticsDebugEvent != null && Input.GetKeyDown(logisticsTriggerKey))
         {
-            TriggerEvent(debugEvent);
+            TriggerEvent(logisticsDebugEvent);
+        }
+
+        if (maintenanceDebugEvent != null && Input.GetKeyDown(maintenanceTriggerKey))
+        {
+            TriggerEvent(maintenanceDebugEvent);
         }
     }
 
     public void TriggerEvent(EventDefinitionSO def)
     {
+        Debug.Log($"TriggerEvent: {def.eventName} | actionText={def.actionText} | id={def.eventId}");
         if (def == null) return;
 
-        // Only allow one active event routine at a time in V1.
+        // Only allow one active event at a time in V1
         if (activeEventRoutine != null)
         {
             StopCoroutine(activeEventRoutine);
@@ -42,15 +52,18 @@ public class EventManager : MonoBehaviour
                 activeEventRoutine = StartCoroutine(HandleLogisticsDelay(def));
                 break;
 
+            case EventType.MaintenanceDegrade:
+                activeEventRoutine = StartCoroutine(HandleMaintenanceDegrade(def));
+                break;
+
             default:
-                Debug.LogWarning($"EventManager: No handler implemented for {def.eventType}");
+                Debug.LogWarning($"No handler implemented for event type {def.eventType}");
                 break;
         }
     }
 
     private IEnumerator HandleLogisticsDelay(EventDefinitionSO def)
     {
-        // Apply the “shipping disabled” effect immediately.
         if (def.targetType == TargetType.Shipping)
         {
             if (PackingArea.Instance == null)
@@ -61,67 +74,137 @@ public class EventManager : MonoBehaviour
 
             PackingArea.Instance.DisableShippingForSeconds(def.timerSeconds);
         }
-        else
-        {
-            Debug.LogWarning($"LogisticsDelay: TargetType {def.targetType} not implemented in V1.");
-        }
 
         bool resolved = false;
 
-        // Primary action: pay to bypass
         void PayToBypass()
         {
             if (!def.canPayToBypass) return;
+            if (MoneyManager.Instance == null) return;
 
-            if (MoneyManager.Instance == null)
-            {
-                Debug.LogError("LogisticsDelay: MoneyManager.Instance is null.");
-                return;
-            }
+            bool paid = MoneyManager.Instance.TrySpend(
+                def.bypassCost,
+                PayType.Purchase,
+                def.bypassLabel
+            );
 
-            bool paid = MoneyManager.Instance.TrySpend(def.bypassCost, TransactionType.Purchase, def.bypassLabel);
-            if (!paid)
-            {
-                Debug.Log("LogisticsDelay: Not enough money to bypass.");
-                return;
-            }
+            if (!paid) return;
 
-            // Re-enable shipping immediately.
-            if (PackingArea.Instance != null)
-                PackingArea.Instance.SetShippingDisabled(false);
-
+            PackingArea.Instance?.SetShippingDisabled(false);
             popupUI?.Hide();
             resolved = true;
         }
 
-        // Secondary action: just close popup and wait it out
         void WaitItOut()
         {
             popupUI?.Hide();
             resolved = true;
         }
 
-        // Show popup
-        if (popupUI != null)
-        {
-            string primaryLabel = def.canPayToBypass ? $"{def.actionText} (£{def.bypassCost})" : "OK";
-            popupUI.Show(def.eventName, def.playerPrompt, primaryLabel, PayToBypass, "Wait", WaitItOut);
-        }
+        popupUI?.Show(
+            def.eventName,
+            def.playerPrompt,
+            def.canPayToBypass ? $"{def.actionText} (£{def.bypassCost})" : "OK",
+            PayToBypass,
+            "Wait",
+            WaitItOut
+        );
 
-        // Optional: show “resolves in X seconds” in the popup while it’s open
         float endTime = Time.time + Mathf.Max(0f, def.timerSeconds);
         while (!resolved)
         {
-            if (popupUI != null && popupUI.root != null && popupUI.root.activeSelf)
+            if (popupUI != null && popupUI.root.activeSelf)
             {
-                float remaining = Mathf.Max(0f, endTime - Time.time);
-                popupUI.SetTimerVisible(true, remaining);
+                popupUI.SetTimerVisible(true, endTime - Time.time);
             }
             yield return null;
         }
 
-        // Handler ends. Shipping auto re-enables inside PackingArea when the timer expires,
-        // unless the player paid to bypass (we cleared it immediately).
+        activeEventRoutine = null;
+    }
+
+    private IEnumerator HandleMaintenanceDegrade(EventDefinitionSO def)
+    {
+        if (def.targetType != TargetType.MachineSlot)
+        {
+            Debug.LogWarning("MaintenanceDegrade: invalid target type for V1");
+            yield break;
+        }
+
+        if (!System.Enum.TryParse(def.targetId, out MachineType machineType))
+        {
+            Debug.LogError($"MaintenanceDegrade: unknown MachineType '{def.targetId}'");
+            yield break;
+        }
+
+        MachineSlot targetSlot = null;
+        foreach (var slot in FindObjectsByType<MachineSlot>(FindObjectsSortMode.None))
+        {
+            if (slot.machineType == machineType)
+            {
+                targetSlot = slot;
+                break;
+            }
+        }
+
+        if (targetSlot == null)
+        {
+            Debug.LogError($"MaintenanceDegrade: no MachineSlot found for {machineType}");
+            yield break;
+        }
+
+        // Apply yellow-state degradation
+        targetSlot.ApplyThroughputMultiplier(0.7f);
+
+        bool resolved = false;
+
+        void PayToFix()
+        {
+            if (MoneyManager.Instance == null) return;
+
+            bool paid = MoneyManager.Instance.TrySpend(
+                def.bypassCost,
+                PayType.Maintenance,
+                def.bypassLabel
+            );
+
+            if (!paid) return;
+
+            targetSlot.RestoreOperational();
+            popupUI?.Hide();
+            resolved = true;
+        }
+
+        void WaitItOut()
+        {
+            popupUI?.Hide();
+            resolved = true;
+        }
+
+        popupUI?.Show(
+            def.eventName,
+            def.playerPrompt,
+            def.canPayToBypass ? $"{def.actionText} (£{def.bypassCost})" : "OK",
+            PayToFix,
+            "Wait",
+            WaitItOut
+        );
+
+        float endTime = Time.time + Mathf.Max(0f, def.timerSeconds);
+        while (!resolved && Time.time < endTime)
+        {
+            if (popupUI != null && popupUI.root.activeSelf)
+            {
+                popupUI.SetTimerVisible(true, endTime - Time.time);
+            }
+            yield return null;
+        }
+
+        if (!resolved)
+        {
+            targetSlot.RestoreOperational();
+        }
+
         activeEventRoutine = null;
     }
 }

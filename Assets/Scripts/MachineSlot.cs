@@ -25,6 +25,19 @@ public class MachineSlot : MonoBehaviour
     private GameObject currentMachineInstance;
     private int currentIndex = -1;           // Selected option index
 
+    // --- Event modifiers (v1) ---
+    // Events (maintenance, breakdowns) should NOT modify MachineConfig.
+    // Instead, they apply temporary multipliers to this slot.
+
+    [SerializeField, Tooltip("Multiplier applied to the selected machine's throughput due to events/maintenance. 1 = normal, 0.7 = degraded, 0 = stopped.")]
+    private float throughputMultiplier = 1f;
+
+    [SerializeField, Tooltip("If false, this slot is considered stopped by an event (throughput = 0).")]
+    private bool isOperational = true;
+
+    /// <summary>Current throughput multiplier applied by events/maintenance.</summary>
+    public float ThroughputMultiplier => throughputMultiplier;
+
     // Fired whenever the player selects/changes the machine option for this slot.
     public event Action<MachineSlot> OnSelectionChanged;
 
@@ -33,8 +46,8 @@ public class MachineSlot : MonoBehaviour
     // True if a valid MachineConfig is currently selected for this slot.
     public bool HasMachineInstalled => CurrentConfig != null;
 
-    // v1: always operational. Later you can wire breakdowns/maintenance into this.
-    public bool IsOperational => true;
+    // v1: now event-driven operational state.
+    public bool IsOperational => isOperational;
 
     // The currently selected MachineConfig (or null if none selected).
     public MachineConfig CurrentConfig
@@ -49,6 +62,7 @@ public class MachineSlot : MonoBehaviour
 
     // Current throughput in tonnes per hour for the selected option.
     // Uses reflection as a safety net so you don't have to perfectly align field names during refactors.
+    // Applies event modifiers via throughputMultiplier/isOperational.
     public float CurrentThroughputTPH
     {
         get
@@ -56,27 +70,32 @@ public class MachineSlot : MonoBehaviour
             var cfg = CurrentConfig;
             if (cfg == null) return 0f;
 
+            // If an event has stopped this machine, throughput is zero.
+            if (!isOperational) return 0f;
+
             Type t = cfg.GetType();
+
+            float mult = Mathf.Max(0f, throughputMultiplier);
 
             // Prefer the standardized property we added to MachineConfig.
             PropertyInfo p = t.GetProperty("ThroughputTPH", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            if (p != null && p.PropertyType == typeof(float)) return (float)p.GetValue(cfg);
+            if (p != null && p.PropertyType == typeof(float)) return Mathf.Max(0f, (float)p.GetValue(cfg)) * mult;
 
             // Fallbacks (in case you rename things later)
             p = t.GetProperty("throughputTPH", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            if (p != null && p.PropertyType == typeof(float)) return (float)p.GetValue(cfg);
+            if (p != null && p.PropertyType == typeof(float)) return Mathf.Max(0f, (float)p.GetValue(cfg)) * mult;
 
             FieldInfo f = t.GetField("throughputTPH", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            if (f != null && f.FieldType == typeof(float)) return (float)f.GetValue(cfg);
+            if (f != null && f.FieldType == typeof(float)) return Mathf.Max(0f, (float)f.GetValue(cfg)) * mult;
 
             f = t.GetField("throughputTph", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            if (f != null && f.FieldType == typeof(float)) return (float)f.GetValue(cfg);
+            if (f != null && f.FieldType == typeof(float)) return Mathf.Max(0f, (float)f.GetValue(cfg)) * mult;
 
             f = t.GetField("throughputTonnesPerHour", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            if (f != null && f.FieldType == typeof(float)) return (float)f.GetValue(cfg);
+            if (f != null && f.FieldType == typeof(float)) return Mathf.Max(0f, (float)f.GetValue(cfg)) * mult;
 
             f = t.GetField("throughput", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            if (f != null && f.FieldType == typeof(float)) return (float)f.GetValue(cfg);
+            if (f != null && f.FieldType == typeof(float)) return Mathf.Max(0f, (float)f.GetValue(cfg)) * mult;
 
             return 0f;
         }
@@ -253,5 +272,39 @@ public class MachineSlot : MonoBehaviour
         bool newState = !hoverMenu.activeSelf;
         SetMenuVisible(newState);
         Debug.Log($"[MachineSlot] OnMouseDown fired on: {name}, menu state: {newState}");
+    }
+    // --- Event API (called by EventManager handlers) ---
+
+    /// <summary>
+    /// Apply a temporary throughput multiplier due to maintenance/event effects.
+    /// Example: 0.7f for Yellow (degraded), 0f for Red (stopped).
+    /// </summary>
+    public void ApplyThroughputMultiplier(float multiplier)
+    {
+        throughputMultiplier = Mathf.Clamp01(multiplier);
+        if (throughputMultiplier <= 0f)
+            isOperational = false;
+
+        OnSelectionChanged?.Invoke(this);
+    }
+
+    /// <summary>
+    /// Stop this machine slot (throughput becomes 0).
+    /// </summary>
+    public void StopOperational()
+    {
+        isOperational = false;
+        throughputMultiplier = 0f;
+        OnSelectionChanged?.Invoke(this);
+    }
+
+    /// <summary>
+    /// Restore normal operation (Green state in v1).
+    /// </summary>
+    public void RestoreOperational()
+    {
+        isOperational = true;
+        throughputMultiplier = 1f;
+        OnSelectionChanged?.Invoke(this);
     }
 }

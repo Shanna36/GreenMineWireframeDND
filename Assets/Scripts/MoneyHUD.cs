@@ -34,7 +34,7 @@ public class MoneyHUD : MonoBehaviour
         MoneyManager.Instance.OnBalanceChanged += HandleBalanceChanged;
 
         // Force an initial refresh
-        HandleBalanceChanged(MoneyManager.Instance.CurrentCoins, 0, TransactionType.Ship, "Init");
+        HandleBalanceChanged(MoneyManager.Instance.CurrentCoins, 0, PayType.Ship, "Init");
     }
 
     private void OnDisable()
@@ -49,7 +49,7 @@ public class MoneyHUD : MonoBehaviour
     private void HandleBalanceChanged(
         int newBalance,
         int delta,
-        TransactionType type,
+        PayType type,
         string label
     )
     {

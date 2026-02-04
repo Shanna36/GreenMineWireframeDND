@@ -9,6 +9,14 @@ public enum MaterialType
     Residue
 }
 
+public enum PayType
+{
+    Purchase,
+    Maintenance,
+    Ship,
+    Dump
+}
+
 public class MoneyManager : MonoBehaviour
 {
     public static MoneyManager Instance { get; private set; }
@@ -30,8 +38,8 @@ public class MoneyManager : MonoBehaviour
     public float valueLossPerPercent = 0.1f;
 
     public int CurrentCoins { get; private set; }
-    // newBalance, delta, transactionType, label
-    public event System.Action<int, int, TransactionType, string> OnBalanceChanged;
+    // newBalance, delta, payType, label
+    public event System.Action<int, int, PayType, string> OnBalanceChanged;
 
     private void Awake()
     {
@@ -44,7 +52,7 @@ public class MoneyManager : MonoBehaviour
         Instance = this;
         DontDestroyOnLoad(gameObject);
         CurrentCoins = startingCoins;
-        OnBalanceChanged?.Invoke(CurrentCoins, 0, TransactionType.Purchase, "Init");
+        OnBalanceChanged?.Invoke(CurrentCoins, 0, PayType.Purchase, "Init");
     }
 
     // -------- Purchasing --------
@@ -58,7 +66,7 @@ public class MoneyManager : MonoBehaviour
     {
         if (!CanAfford(cost)) return false;
         CurrentCoins -= cost;
-        OnBalanceChanged?.Invoke(CurrentCoins, -cost, TransactionType.Dump, "Spend");
+        OnBalanceChanged?.Invoke(CurrentCoins, -cost, PayType.Purchase, "Spend");
         return true;
     }
 
@@ -73,7 +81,7 @@ public class MoneyManager : MonoBehaviour
     /// <summary>
     /// Overload used by PackingArea: allows tagging the spend with a transaction type and label.
     /// </summary>
-    public bool TrySpend(int cost, TransactionType type, string label)
+    public bool TrySpend(int cost, PayType type, string label)
     {
         if (!CanAfford(cost)) return false;
         CurrentCoins -= cost;
@@ -83,7 +91,7 @@ public class MoneyManager : MonoBehaviour
 
     public bool TryPurchase(int cost, string machineName)
     {
-        return TrySpend(cost, TransactionType.Purchase, machineName);
+        return TrySpend(cost, PayType.Purchase, machineName);
     }
 
     public int SellBack(int purchasePrice, float resaleRate = 0.5f)
@@ -110,7 +118,7 @@ public class MoneyManager : MonoBehaviour
         if (payout <= 0) return 0;
 
         CurrentCoins += payout;
-        OnBalanceChanged?.Invoke(CurrentCoins, payout, TransactionType.Ship, material.ToString());
+        OnBalanceChanged?.Invoke(CurrentCoins, payout, PayType.Ship, material.ToString());
         return payout;
     }
 
@@ -125,7 +133,7 @@ public class MoneyManager : MonoBehaviour
     {
         if (!CanAffordDump()) return false;
         CurrentCoins -= dumpCostPerDump;
-        OnBalanceChanged?.Invoke(CurrentCoins, -dumpCostPerDump, TransactionType.Dump, "Dump");
+        OnBalanceChanged?.Invoke(CurrentCoins, -dumpCostPerDump, PayType.Dump, "Dump");
         return true;
     }
 
