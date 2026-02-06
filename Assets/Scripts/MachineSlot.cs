@@ -25,29 +25,24 @@ public class MachineSlot : MonoBehaviour
     private GameObject currentMachineInstance;
     private int currentIndex = -1;           // Selected option index
 
-    // --- Event modifiers (v1) ---
-    // Events (maintenance, breakdowns) should NOT modify MachineConfig.
-    // Instead, they apply temporary multipliers to this slot.
+    // Fired whenever the player selects/changes the machine option for this slot.
+    public event Action<MachineSlot> OnSelectionChanged;
 
-    [SerializeField, Tooltip("Multiplier applied to the selected machine's throughput due to events/maintenance. 1 = normal, 0.7 = degraded, 0 = stopped.")]
-    private float throughputMultiplier = 1f;
+    // --- Event state (maintenance/breakdown) ---
 
     [SerializeField, Tooltip("If false, this slot is considered stopped by an event (throughput = 0).")]
     private bool isOperational = true;
 
-    /// <summary>Current throughput multiplier applied by events/maintenance.</summary>
-    public float ThroughputMultiplier => throughputMultiplier;
-
-    // Fired whenever the player selects/changes the machine option for this slot.
-    public event Action<MachineSlot> OnSelectionChanged;
+    [SerializeField, Range(0f, 1f), Tooltip("Multiplier applied to throughput due to events/maintenance (1=normal, 0.7=degraded).")]
+    private float throughputMultiplier = 1f;
 
     // --- Throughput Aggregator helpers ---
 
     // True if a valid MachineConfig is currently selected for this slot.
     public bool HasMachineInstalled => CurrentConfig != null;
 
-    // v1: now event-driven operational state.
     public bool IsOperational => isOperational;
+    public float ThroughputMultiplier => throughputMultiplier;
 
     // The currently selected MachineConfig (or null if none selected).
     public MachineConfig CurrentConfig
@@ -70,32 +65,36 @@ public class MachineSlot : MonoBehaviour
             var cfg = CurrentConfig;
             if (cfg == null) return 0f;
 
-            // If an event has stopped this machine, throughput is zero.
             if (!isOperational) return 0f;
 
             Type t = cfg.GetType();
-
             float mult = Mathf.Max(0f, throughputMultiplier);
 
-            // Prefer the standardized property we added to MachineConfig.
+            // Prefer the standardized property name.
             PropertyInfo p = t.GetProperty("ThroughputTPH", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            if (p != null && p.PropertyType == typeof(float)) return Mathf.Max(0f, (float)p.GetValue(cfg)) * mult;
+            if (p != null && p.PropertyType == typeof(float))
+                return Mathf.Max(0f, (float)p.GetValue(cfg)) * mult;
 
-            // Fallbacks (in case you rename things later)
+            // Fallbacks
             p = t.GetProperty("throughputTPH", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            if (p != null && p.PropertyType == typeof(float)) return Mathf.Max(0f, (float)p.GetValue(cfg)) * mult;
+            if (p != null && p.PropertyType == typeof(float))
+                return Mathf.Max(0f, (float)p.GetValue(cfg)) * mult;
 
             FieldInfo f = t.GetField("throughputTPH", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            if (f != null && f.FieldType == typeof(float)) return Mathf.Max(0f, (float)f.GetValue(cfg)) * mult;
+            if (f != null && f.FieldType == typeof(float))
+                return Mathf.Max(0f, (float)f.GetValue(cfg)) * mult;
 
             f = t.GetField("throughputTph", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            if (f != null && f.FieldType == typeof(float)) return Mathf.Max(0f, (float)f.GetValue(cfg)) * mult;
+            if (f != null && f.FieldType == typeof(float))
+                return Mathf.Max(0f, (float)f.GetValue(cfg)) * mult;
 
             f = t.GetField("throughputTonnesPerHour", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            if (f != null && f.FieldType == typeof(float)) return Mathf.Max(0f, (float)f.GetValue(cfg)) * mult;
+            if (f != null && f.FieldType == typeof(float))
+                return Mathf.Max(0f, (float)f.GetValue(cfg)) * mult;
 
             f = t.GetField("throughput", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            if (f != null && f.FieldType == typeof(float)) return Mathf.Max(0f, (float)f.GetValue(cfg)) * mult;
+            if (f != null && f.FieldType == typeof(float))
+                return Mathf.Max(0f, (float)f.GetValue(cfg)) * mult;
 
             return 0f;
         }
@@ -188,21 +187,20 @@ public class MachineSlot : MonoBehaviour
             return;
         }
 
-        // --- Purchase check (non-disruptive) ---
-        // We only charge when installing the first machine, or when upgrading to a more expensive option.
-        // Downgrades do not refund in v1.
-        int newCost = GetCost(option.config);
-        int oldCost = GetCost(CurrentConfig);
-        int upgradeCost = Mathf.Max(0, newCost - oldCost);
-
         // If selecting the same option again, do nothing.
         if (index == currentIndex)
         {
             Debug.Log($"[MachineSlot] Option {index} already selected on {name}. No action taken.");
+            SetMenuVisible(false);
             return;
         }
 
-        // If there is a cost to pay, require MoneyManager.
+        // --- Purchase check (v1) ---
+        // Charge only the upgrade delta (no refund on downgrades).
+        int newCost = GetCost(option.config);
+        int oldCost = GetCost(CurrentConfig);
+        int upgradeCost = Mathf.Max(0, newCost - oldCost);
+
         if (upgradeCost > 0)
         {
             if (MoneyManager.Instance == null)
@@ -211,7 +209,6 @@ public class MachineSlot : MonoBehaviour
                 return;
             }
 
-            // If we can't afford it, do NOT change the current machine.
             bool paid = MoneyManager.Instance.TryPurchase(upgradeCost, GetMachineLabel(option));
             if (!paid)
             {
@@ -238,59 +235,46 @@ public class MachineSlot : MonoBehaviour
 
         currentIndex = index;
 
-        // Notify listeners (e.g., ThroughputAggregator) that this slot's selection changed.
+        // Installing/changing a machine returns it to normal operation.
+        isOperational = true;
+        throughputMultiplier = 1f;
+
         OnSelectionChanged?.Invoke(this);
-    }
 
-    public void SelectBasic()
-    {
-        SelectOption(0);
         SetMenuVisible(false);
     }
 
-    public void SelectMedium()
-    {
-        SelectOption(1);
-        SetMenuVisible(false);
-    }
+    // Wrapper methods for UI buttons (these are likely what your buttons are wired to)
+    public void SelectBasic() { SelectOption(0); }
+    public void SelectMedium() { SelectOption(1); }
+    public void SelectPremium() { SelectOption(2); }
 
-    public void SelectPremium()
-    {
-        SelectOption(2);
-        SetMenuVisible(false);
-    }
-
-   private void OnMouseDown()
+    private void OnMouseDown()
     {
         // If clicking UI (e.g., popup buttons), don't also toggle the slot menu.
-        Debug.Log($"[MachineSlot] Clicked {name}");
         if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
             return;
 
         if (hoverMenu == null) return;
 
-        bool newState = !hoverMenu.activeSelf;
-        SetMenuVisible(newState);
-        Debug.Log($"[MachineSlot] OnMouseDown fired on: {name}, menu state: {newState}");
+        SetMenuVisible(!hoverMenu.activeSelf);
     }
+
     // --- Event API (called by EventManager handlers) ---
 
-    /// <summary>
-    /// Apply a temporary throughput multiplier due to maintenance/event effects.
-    /// Example: 0.7f for Yellow (degraded), 0f for Red (stopped).
-    /// </summary>
     public void ApplyThroughputMultiplier(float multiplier)
     {
         throughputMultiplier = Mathf.Clamp01(multiplier);
+
+        // Defensive: if throughput is driven to zero by an event, treat as non-operational.
         if (throughputMultiplier <= 0f)
+        {
             isOperational = false;
+        }
 
         OnSelectionChanged?.Invoke(this);
     }
 
-    /// <summary>
-    /// Stop this machine slot (throughput becomes 0).
-    /// </summary>
     public void StopOperational()
     {
         isOperational = false;
@@ -298,9 +282,6 @@ public class MachineSlot : MonoBehaviour
         OnSelectionChanged?.Invoke(this);
     }
 
-    /// <summary>
-    /// Restore normal operation (Green state in v1).
-    /// </summary>
     public void RestoreOperational()
     {
         isOperational = true;

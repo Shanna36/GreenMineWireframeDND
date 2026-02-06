@@ -37,7 +37,6 @@ public class ThroughputAggregator : MonoBehaviour
 
     private void Update()
     {
-        if (!debugLog) return;
         if (!Application.isPlaying) return;
 
         // Recalculate periodically so the log reflects selections made after the scene starts.

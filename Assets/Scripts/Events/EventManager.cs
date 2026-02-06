@@ -5,6 +5,7 @@ public class EventManager : MonoBehaviour
 {
     [Header("References")]
     public EventPopupUI popupUI;
+    public GameStateManager gameStateManager;
 
     [Header("Debug Hotkeys")]
     public bool enableDebugHotkeys = true;
@@ -21,23 +22,28 @@ public class EventManager : MonoBehaviour
 
     private void Update()
     {
+        if (gameStateManager != null && gameStateManager.IsGameOver) return;
         if (!enableDebugHotkeys) return;
 
         if (logisticsDebugEvent != null && Input.GetKeyDown(logisticsTriggerKey))
         {
+            Debug.LogWarning($"[EventManager] Logistics hotkey pressed. eventId={logisticsDebugEvent.eventId} type={logisticsDebugEvent.eventType}");
             TriggerEvent(logisticsDebugEvent);
         }
 
         if (maintenanceDebugEvent != null && Input.GetKeyDown(maintenanceTriggerKey))
         {
+            Debug.LogWarning($"[EventManager] Maintenance hotkey pressed. eventId={maintenanceDebugEvent.eventId} type={maintenanceDebugEvent.eventType}");
             TriggerEvent(maintenanceDebugEvent);
         }
     }
 
     public void TriggerEvent(EventDefinitionSO def)
     {
-        Debug.Log($"TriggerEvent: {def.eventName} | actionText={def.actionText} | id={def.eventId}");
         if (def == null) return;
+        if (gameStateManager != null && gameStateManager.IsGameOver) return;
+        Debug.LogWarning($"[EventManager] TriggerEvent: {def.eventName} | id={def.eventId} | type={def.eventType}");
+        Debug.LogWarning($"[EventManager] Routing: eventType={def.eventType} targetType={def.targetType} targetId='{def.targetId}' activeEventRoutine={(activeEventRoutine != null ? "YES" : "NO")}");
 
         // Only allow one active event at a time in V1
         if (activeEventRoutine != null)
@@ -49,15 +55,17 @@ public class EventManager : MonoBehaviour
         switch (def.eventType)
         {
             case EventType.LogisticsDelay:
+                Debug.Log("[EventManager] Starting coroutine: HandleLogisticsDelay");
                 activeEventRoutine = StartCoroutine(HandleLogisticsDelay(def));
                 break;
 
             case EventType.MaintenanceDegrade:
+                Debug.Log("[EventManager] Starting coroutine: HandleMaintenanceDegrade");
                 activeEventRoutine = StartCoroutine(HandleMaintenanceDegrade(def));
                 break;
 
             default:
-                Debug.LogWarning($"No handler implemented for event type {def.eventType}");
+                Debug.LogWarning($"No handler implemented for event type {def.eventType} (id={def.eventId})");
                 break;
         }
     }
@@ -113,6 +121,12 @@ public class EventManager : MonoBehaviour
         float endTime = Time.time + Mathf.Max(0f, def.timerSeconds);
         while (!resolved)
         {
+            if (gameStateManager != null && gameStateManager.IsGameOver)
+            {
+                popupUI?.Hide();
+                activeEventRoutine = null;
+                yield break;
+            }
             if (popupUI != null && popupUI.root.activeSelf)
             {
                 popupUI.SetTimerVisible(true, endTime - Time.time);
@@ -125,6 +139,7 @@ public class EventManager : MonoBehaviour
 
     private IEnumerator HandleMaintenanceDegrade(EventDefinitionSO def)
     {
+        Debug.Log($"[EventManager] Maintenance started: {def.eventName} targetId={def.targetId} timer={def.timerSeconds}");
         if (def.targetType != TargetType.MachineSlot)
         {
             Debug.LogWarning("MaintenanceDegrade: invalid target type for V1");
@@ -188,7 +203,15 @@ public class EventManager : MonoBehaviour
         );
 
         while (!decisionMade)
+        {
+            if (gameStateManager != null && gameStateManager.IsGameOver)
+            {
+                popupUI?.Hide();
+                activeEventRoutine = null;
+                yield break;
+            }
             yield return null;
+        }
 
         if (paidMaintenance)
         {
@@ -199,13 +222,22 @@ public class EventManager : MonoBehaviour
         // Escalation timer
         float endTime = Time.time + Mathf.Max(0f, def.timerSeconds);
         while (Time.time < endTime)
+        {
+            if (gameStateManager != null && gameStateManager.IsGameOver)
+            {
+                popupUI?.Hide();
+                activeEventRoutine = null;
+                yield break;
+            }
             yield return null;
+        }
 
         // Red state: breakdown
         targetSlot.StopOperational();
 
         int repairCost = Mathf.Max(def.bypassCost * 2, def.bypassCost + 1);
         bool repaired = false;
+        bool ignored = false;
 
         void Repair()
         {
@@ -217,17 +249,33 @@ public class EventManager : MonoBehaviour
             repaired = true;
         }
 
+        void Ignore()
+        {
+            // Player can ignore for now; the machine remains broken.
+            popupUI?.Hide();
+            ignored = true;
+        }
+
         popupUI?.Show(
             "Machine Breakdown",
             $"{machineType} has broken down due to delayed maintenance.",
             $"Repair (£{repairCost})",
             Repair,
             "Ignore",
-            () => popupUI?.Hide()
+            Ignore
         );
 
-        while (!repaired)
+        // End the event routine when the player either repairs OR ignores.
+        while (!repaired && !ignored)
+        {
+            if (gameStateManager != null && gameStateManager.IsGameOver)
+            {
+                popupUI?.Hide();
+                activeEventRoutine = null;
+                yield break;
+            }
             yield return null;
+        }
 
         activeEventRoutine = null;
     }
