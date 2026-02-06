@@ -153,57 +153,81 @@ public class EventManager : MonoBehaviour
             yield break;
         }
 
-        // Apply yellow-state degradation
+        // Yellow state: degraded throughput
         targetSlot.ApplyThroughputMultiplier(0.7f);
 
-        bool resolved = false;
+        bool decisionMade = false;
+        bool paidMaintenance = false;
 
-        void PayToFix()
+        void PayNow()
         {
+            if (!def.canPayToBypass) return;
             if (MoneyManager.Instance == null) return;
 
-            bool paid = MoneyManager.Instance.TrySpend(
-                def.bypassCost,
-                PayType.Maintenance,
-                def.bypassLabel
-            );
-
-            if (!paid) return;
+            if (!MoneyManager.Instance.TrySpend(def.bypassCost, PayType.Maintenance, def.bypassLabel)) return;
 
             targetSlot.RestoreOperational();
             popupUI?.Hide();
-            resolved = true;
+            paidMaintenance = true;
+            decisionMade = true;
         }
 
-        void WaitItOut()
+        void Delay()
         {
             popupUI?.Hide();
-            resolved = true;
+            decisionMade = true;
         }
 
         popupUI?.Show(
             def.eventName,
             def.playerPrompt,
             def.canPayToBypass ? $"{def.actionText} (£{def.bypassCost})" : "OK",
-            PayToFix,
-            "Wait",
-            WaitItOut
+            PayNow,
+            "Delay",
+            Delay
         );
 
-        float endTime = Time.time + Mathf.Max(0f, def.timerSeconds);
-        while (!resolved && Time.time < endTime)
-        {
-            if (popupUI != null && popupUI.root.activeSelf)
-            {
-                popupUI.SetTimerVisible(true, endTime - Time.time);
-            }
+        while (!decisionMade)
             yield return null;
+
+        if (paidMaintenance)
+        {
+            activeEventRoutine = null;
+            yield break;
         }
 
-        if (!resolved)
+        // Escalation timer
+        float endTime = Time.time + Mathf.Max(0f, def.timerSeconds);
+        while (Time.time < endTime)
+            yield return null;
+
+        // Red state: breakdown
+        targetSlot.StopOperational();
+
+        int repairCost = Mathf.Max(def.bypassCost * 2, def.bypassCost + 1);
+        bool repaired = false;
+
+        void Repair()
         {
+            if (MoneyManager.Instance == null) return;
+            if (!MoneyManager.Instance.TrySpend(repairCost, PayType.Maintenance, "Repair")) return;
+
             targetSlot.RestoreOperational();
+            popupUI?.Hide();
+            repaired = true;
         }
+
+        popupUI?.Show(
+            "Machine Breakdown",
+            $"{machineType} has broken down due to delayed maintenance.",
+            $"Repair (£{repairCost})",
+            Repair,
+            "Ignore",
+            () => popupUI?.Hide()
+        );
+
+        while (!repaired)
+            yield return null;
 
         activeEventRoutine = null;
     }
