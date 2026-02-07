@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 using System;
+using System.Collections;
 using System.Reflection;
 
 [System.Serializable]
@@ -27,6 +28,16 @@ public class MachineSlot : MonoBehaviour
 
     // Fired whenever the player selects/changes the machine option for this slot.
     public event Action<MachineSlot> OnSelectionChanged;
+
+
+    [Header("Visuals (optional)")]
+    [Tooltip("Optional warning effect to toggle during maintenance degrade (e.g., a flashing yellow particle system GameObject).")]
+    public GameObject warningEffect;
+
+    [Tooltip("How fast the warningEffect flashes on/off (seconds).")]
+    public float warningFlashInterval = 0.5f;
+
+    private Coroutine _warningFlashRoutine;
 
     // --- Event state (maintenance/breakdown) ---
 
@@ -260,6 +271,45 @@ public class MachineSlot : MonoBehaviour
         SetMenuVisible(!hoverMenu.activeSelf);
     }
 
+    /// <summary>
+    /// Enables/disables a flashing warning effect to indicate a degraded state.
+    /// Assign a particle effect GameObject in the inspector.
+    /// </summary>
+    public void SetWarningState(bool enabled)
+    {
+        if (warningEffect == null)
+            return;
+
+        if (enabled)
+        {
+            if (_warningFlashRoutine == null)
+                _warningFlashRoutine = StartCoroutine(WarningFlashLoop());
+        }
+        else
+        {
+            if (_warningFlashRoutine != null)
+            {
+                StopCoroutine(_warningFlashRoutine);
+                _warningFlashRoutine = null;
+            }
+            warningEffect.SetActive(false);
+        }
+    }
+
+    private IEnumerator WarningFlashLoop()
+    {
+        // Start visible
+        warningEffect.SetActive(true);
+
+        while (true)
+        {
+            yield return new WaitForSecondsRealtime(warningFlashInterval);
+            
+            if (warningEffect != null)
+                warningEffect.SetActive(!warningEffect.activeSelf);
+        }
+    }
+
     // --- Event API (called by EventManager handlers) ---
 
     public void ApplyThroughputMultiplier(float multiplier)
@@ -279,6 +329,7 @@ public class MachineSlot : MonoBehaviour
     {
         isOperational = false;
         throughputMultiplier = 0f;
+        SetWarningState(false);
         OnSelectionChanged?.Invoke(this);
     }
 
@@ -286,6 +337,7 @@ public class MachineSlot : MonoBehaviour
     {
         isOperational = true;
         throughputMultiplier = 1f;
+        SetWarningState(false);
         OnSelectionChanged?.Invoke(this);
     }
 }

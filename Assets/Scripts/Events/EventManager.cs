@@ -168,6 +168,19 @@ public class EventManager : MonoBehaviour
             yield break;
         }
 
+        //added to combat no loss condition
+
+    
+
+    // NEW: Skip if already broken
+    if (!targetSlot.IsOperational)
+    {
+        targetSlot.SetWarningState(false);
+        Debug.LogWarning($"[EventManager] Machine {machineType} is already broken. Skipping maintenance event.");
+        activeEventRoutine = null;
+        yield break;
+    }
+
         // Yellow state: degraded throughput
         targetSlot.ApplyThroughputMultiplier(0.7f);
 
@@ -182,6 +195,7 @@ public class EventManager : MonoBehaviour
             if (!MoneyManager.Instance.TrySpend(def.bypassCost, PayType.Maintenance, def.bypassLabel)) return;
 
             targetSlot.RestoreOperational();
+            targetSlot.SetWarningState(false);
             popupUI?.Hide();
             paidMaintenance = true;
             decisionMade = true;
@@ -189,6 +203,7 @@ public class EventManager : MonoBehaviour
 
         void Delay()
         {
+            targetSlot.SetWarningState(true);
             popupUI?.Hide();
             decisionMade = true;
         }
@@ -234,6 +249,7 @@ public class EventManager : MonoBehaviour
 
         // Red state: breakdown
         targetSlot.StopOperational();
+        targetSlot.SetWarningState(false);
 
         int repairCost = Mathf.Max(def.bypassCost * 2, def.bypassCost + 1);
         bool repaired = false;
@@ -245,6 +261,7 @@ public class EventManager : MonoBehaviour
             if (!MoneyManager.Instance.TrySpend(repairCost, PayType.Maintenance, "Repair")) return;
 
             targetSlot.RestoreOperational();
+            targetSlot.SetWarningState(false);
             popupUI?.Hide();
             repaired = true;
         }

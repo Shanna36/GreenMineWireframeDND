@@ -61,11 +61,17 @@ public class ThroughputAggregator : MonoBehaviour
         foreach (var slot in machineSlots)
         {
             if (slot == null)
-                continue;
+            {
+                // If a required slot reference is missing, treat the line as unable to run.
+                bottleneck = 0f;
+                if (debugLog) Debug.LogWarning("[ThroughputAggregator] machineSlots contains a NULL entry; treating throughput as 0.");
+                break;
+            }
 
             if (!slot.HasMachineInstalled)
             {
                 bottleneck = 0f;
+                if (debugLog) Debug.LogWarning($"[ThroughputAggregator] Slot='{slot.name}' has no machine installed; treating throughput as 0.");
                 break;
             }
 
@@ -73,6 +79,7 @@ public class ThroughputAggregator : MonoBehaviour
             if (!slot.IsOperational)
             {
                 bottleneck = 0f;
+                if (debugLog) Debug.LogWarning($"[ThroughputAggregator] Slot='{slot.name}' is NOT operational; treating throughput as 0.");
                 break;
             }
 
@@ -80,6 +87,13 @@ public class ThroughputAggregator : MonoBehaviour
 
             // Defensive clamp
             if (tph < 0f) tph = 0f;
+
+            if (debugLog)
+            {
+                Debug.Log(
+                    $"[ThroughputAggregator] Slot='{slot.name}' installed={slot.HasMachineInstalled} operational={slot.IsOperational} tph={tph:0.###} mult={slot.ThroughputMultiplier:0.###}"
+                );
+            }
 
             if (tph < bottleneck)
                 bottleneck = tph;

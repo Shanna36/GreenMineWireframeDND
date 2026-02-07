@@ -3,6 +3,7 @@ using UnityEngine;
 public class GameStateManager : MonoBehaviour
 {
     public bool IsGameOver => currentState == GameState.Lost;
+
     public enum GameState
     {
         Playing,
@@ -13,14 +14,11 @@ public class GameStateManager : MonoBehaviour
     [Tooltip("Reference to the ThroughputAggregator that reports total line throughput")]
     public ThroughputAggregator throughputAggregator;
 
-    [Header("Game Over UI (optional)")]
-    [Tooltip("Optional: a GameObject (e.g., a Canvas/Panel) to enable on Game Over")]
+    [Header("Game Over UI")]
+    [Tooltip("A GameObject (e.g., a Canvas/Panel) to enable on Game Over")]
     public GameObject gameOverRoot;
 
-    [Tooltip("Optional: reuse the existing EventPopupUI to show a Game Over message")]
-    public EventPopupUI gameOverPopup;
-
-    [Tooltip("Optional: reference to EventManager so we can hide its active popup on Game Over")]
+    [Tooltip("Reference to EventManager so we can hide its active popup on Game Over")]
     public EventManager eventManager;
 
     [Header("Lose Condition")]
@@ -31,9 +29,12 @@ public class GameStateManager : MonoBehaviour
     private float stallTimer = 0f;
 
     [Header("Debug")]
-    public bool debugLog = false;
+    public bool debugLog = true;
 
     private bool hasEverRun = false;
+
+    // Throttled diagnostics (unscaled) so we can see early-return causes even if the Console is noisy.
+    private float _nextDiagUnscaledTime = 0f;
 
     private void Start()
     {
@@ -51,9 +52,37 @@ public class GameStateManager : MonoBehaviour
             return;
 
         if (throughputAggregator == null)
+        {
+            if (Time.unscaledTime >= _nextDiagUnscaledTime)
+            {
+                _nextDiagUnscaledTime = Time.unscaledTime + 1f;
+                Debug.LogWarning("[GSM] throughputAggregator reference is NULL. Lose condition cannot run.");
+            }
             return;
+        }
 
         float totalTph = throughputAggregator.EffectiveThroughputTPH;
+
+        // Hard-stall rule: if any required machine slot is missing a machine or is non-operational,
+        // treat the whole line as stalled (throughput = 0). This matches the V1 "full line" model.
+        if (throughputAggregator.machineSlots != null && throughputAggregator.machineSlots.Count > 0)
+        {
+            foreach (var slot in throughputAggregator.machineSlots)
+            {
+                if (slot == null || !slot.HasMachineInstalled || !slot.IsOperational)
+                {
+                    totalTph = 0f;
+                    break;
+                }
+            }
+        }
+
+        if (Time.unscaledTime >= _nextDiagUnscaledTime)
+        {
+            _nextDiagUnscaledTime = Time.unscaledTime + 1f;
+            int slotCount = (throughputAggregator.machineSlots != null) ? throughputAggregator.machineSlots.Count : 0;
+            Debug.LogWarning($"[GSM] diag: state={currentState} hasEverRun={hasEverRun} totalTph={totalTph:0.###} stallTimer={stallTimer:0.00} timeScale={Time.timeScale} slots={slotCount}");
+        }
 
         // Arm the lose condition once the full line is installed OR once it has run.
         bool fullLineInstalled = false;
@@ -79,13 +108,19 @@ public class GameStateManager : MonoBehaviour
         {
             if (debugLog)
                 Debug.Log($"[GameStateManager] Waiting for line to start or be fully assembled... EffectiveThroughputTPH={totalTph:0.###}, fullLineInstalled={fullLineInstalled}");
+            if (Time.unscaledTime >= _nextDiagUnscaledTime)
+            {
+                _nextDiagUnscaledTime = Time.unscaledTime + 1f;
+                Debug.LogWarning($"[GSM] Not armed yet. totalTph={totalTph:0.###} fullLineInstalled={fullLineInstalled} machineSlotsCount={(throughputAggregator.machineSlots != null ? throughputAggregator.machineSlots.Count : 0)}");
+            }
             return;
         }
 
         // If total throughput is zero or less, the line is stalled
         if (totalTph <= 0f)
         {
-            stallTimer += Time.deltaTime;
+            // Use unscaled time so the stall/lose timer still runs even if UI pauses timeScale.
+            stallTimer += Time.unscaledDeltaTime;
             if (debugLog) Debug.Log($"[GameStateManager] Line stalled. t={stallTimer:0.00}/{stallSecondsToLose:0.00}s");
 
             if (stallTimer >= stallSecondsToLose)
@@ -96,7 +131,6 @@ public class GameStateManager : MonoBehaviour
         else
         {
             if (stallTimer > 0f && debugLog) Debug.Log("[GameStateManager] Line recovered. Resetting stall timer.");
-            // Line recovered, reset stall timer
             stallTimer = 0f;
         }
     }
@@ -116,34 +150,13 @@ public class GameStateManager : MonoBehaviour
             eventManager.popupUI.Hide();
         }
 
-        if (gameOverPopup != null)
-        {
-            gameOverPopup.Hide();
-        }
-
-        // If a dedicated root panel is provided, ensure it renders on top.
         if (gameOverRoot != null)
         {
             gameOverRoot.SetActive(true);
             gameOverRoot.transform.SetAsLastSibling();
         }
-        else if (gameOverPopup != null)
-        {
-            // Reuse the popup system if no dedicated Game Over canvas exists yet.
-            gameOverPopup.Show(
-                "Game Over",
-                reason,
-                "OK",
-                () => gameOverPopup.Hide(),
-                "",
-                null
-            );
-            gameOverPopup.transform.SetAsLastSibling();
-        }
 
-        // V1 behaviour: pause the game
+        // Pause the game
         Time.timeScale = 0f;
-
-        // Later: trigger Game Over UI, analytics, restart options, etc.
     }
 }
