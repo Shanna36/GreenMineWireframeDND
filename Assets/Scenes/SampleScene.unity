@@ -1377,7 +1377,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hoverMenu: {fileID: 2090206915}
-  machineType: 0
+  machineType: 5
   spawnPoint: {fileID: 1508783684}
   options:
   - displayName: SortingBasic
@@ -1386,6 +1386,8 @@ MonoBehaviour:
     config: {fileID: 11400000, guid: 2adca3d247b1546178a1a41222cc4c7a, type: 2}
   - displayName: SortingPremium
     config: {fileID: 11400000, guid: 05bec35cbf1fc4014a232f0f1242f30f, type: 2}
+  warningEffect: {fileID: 0}
+  warningFlashInterval: 0.5
   isOperational: 1
   throughputMultiplier: 1
 --- !u!4 &174853787
@@ -1924,6 +1926,63 @@ MonoBehaviour:
   m_ChildScaleWidth: 0
   m_ChildScaleHeight: 0
   m_ReverseArrangement: 0
+--- !u!1001 &227609451
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 1586257861}
+    m_Modifications:
+    - target: {fileID: 6824251348442758076, guid: da9faf6fdc631c243923228f6f916d99, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 5.82336
+      objectReference: {fileID: 0}
+    - target: {fileID: 6824251348442758076, guid: da9faf6fdc631c243923228f6f916d99, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -6.98736
+      objectReference: {fileID: 0}
+    - target: {fileID: 6824251348442758076, guid: da9faf6fdc631c243923228f6f916d99, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 16.75432
+      objectReference: {fileID: 0}
+    - target: {fileID: 6824251348442758076, guid: da9faf6fdc631c243923228f6f916d99, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6824251348442758076, guid: da9faf6fdc631c243923228f6f916d99, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6824251348442758076, guid: da9faf6fdc631c243923228f6f916d99, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6824251348442758076, guid: da9faf6fdc631c243923228f6f916d99, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6824251348442758076, guid: da9faf6fdc631c243923228f6f916d99, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6824251348442758076, guid: da9faf6fdc631c243923228f6f916d99, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6824251348442758076, guid: da9faf6fdc631c243923228f6f916d99, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6827335636575262968, guid: da9faf6fdc631c243923228f6f916d99, type: 3}
+      propertyPath: m_Name
+      value: GlowYellow (1)
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: da9faf6fdc631c243923228f6f916d99, type: 3}
 --- !u!1 &241992357
 GameObject:
   m_ObjectHideFlags: 0
@@ -2734,7 +2793,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0cd44c1031e13a943bb63640046fad76, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_UiScaleMode: 0
+  m_UiScaleMode: 1
   m_ReferencePixelsPerUnit: 100
   m_ScaleFactor: 1
   m_ReferenceResolution: {x: 800, y: 600}
@@ -4895,6 +4954,16 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 497927702}
   m_CullTransparentMesh: 1
+--- !u!1 &527585093 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6827335636575262968, guid: da9faf6fdc631c243923228f6f916d99, type: 3}
+  m_PrefabInstance: {fileID: 227609451}
+  m_PrefabAsset: {fileID: 0}
+--- !u!4 &527585096 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6824251348442758076, guid: da9faf6fdc631c243923228f6f916d99, type: 3}
+  m_PrefabInstance: {fileID: 227609451}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &531086443
 GameObject:
   m_ObjectHideFlags: 0
@@ -9023,7 +9092,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1234477120
 RectTransform:
   m_ObjectHideFlags: 0
@@ -9222,6 +9291,10 @@ PrefabInstance:
     - target: {fileID: 6827335636575262968, guid: da9faf6fdc631c243923228f6f916d99, type: 3}
       propertyPath: m_Name
       value: GlowYellow
+      objectReference: {fileID: 0}
+    - target: {fileID: 6827335636575262968, guid: da9faf6fdc631c243923228f6f916d99, type: 3}
+      propertyPath: m_IsActive
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -9791,7 +9864,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hoverMenu: {fileID: 1104717146}
-  machineType: 3
+  machineType: 1
   spawnPoint: {fileID: 1775347567}
   options:
   - displayName: ECSBasic
@@ -9800,6 +9873,8 @@ MonoBehaviour:
     config: {fileID: 11400000, guid: 66efa65c046404ce184b1613cff5b22d, type: 2}
   - displayName: ECSPremium
     config: {fileID: 11400000, guid: ba4bb3e7b58a44f2cb8facfa17a938d4, type: 2}
+  warningEffect: {fileID: 0}
+  warningFlashInterval: 0.5
   isOperational: 1
   throughputMultiplier: 1
 --- !u!4 &1342215327
@@ -10337,7 +10412,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1442718985
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10399,7 +10474,7 @@ Canvas:
   m_AdditionalShaderChannelsFlag: 25
   m_UpdateRectTransformForStandalone: 0
   m_SortingLayerID: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 1
   m_TargetDisplay: 0
 --- !u!224 &1442718988
 RectTransform:
@@ -10901,7 +10976,7 @@ MonoBehaviour:
   gameOverRoot: {fileID: 1234477119}
   eventManager: {fileID: 1082354537}
   stallSecondsToLose: 10
-  debugLog: 1
+  debugLog: 0
 --- !u!4 &1541469882
 Transform:
   m_ObjectHideFlags: 0
@@ -11341,7 +11416,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   hoverMenu: {fileID: 1178482722}
-  machineType: 2
+  machineType: 0
   spawnPoint: {fileID: 432290772}
   options:
   - displayName: OpticalBasic
@@ -11350,6 +11425,8 @@ MonoBehaviour:
     config: {fileID: 11400000, guid: b4f4352c806c146aaa86aff30c3c5c2c, type: 2}
   - displayName: OpticalPremium
     config: {fileID: 11400000, guid: 10fb870d8f9594e248f8e9a7a6f27592, type: 2}
+  warningEffect: {fileID: 527585093}
+  warningFlashInterval: 0.5
   isOperational: 1
   throughputMultiplier: 1
 --- !u!4 &1586257861
@@ -11367,6 +11444,7 @@ Transform:
   m_Children:
   - {fileID: 1586923572}
   - {fileID: 2062556521}
+  - {fileID: 527585096}
   - {fileID: 478943918}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -12182,6 +12260,8 @@ MonoBehaviour:
     config: {fileID: 11400000, guid: b4f4352c806c146aaa86aff30c3c5c2c, type: 2}
   - displayName: BallisticPremium
     config: {fileID: 11400000, guid: 10fb870d8f9594e248f8e9a7a6f27592, type: 2}
+  warningEffect: {fileID: 0}
+  warningFlashInterval: 0.5
   isOperational: 1
   throughputMultiplier: 1
 --- !u!4 &1713001102
@@ -13430,6 +13510,8 @@ MonoBehaviour:
     config: {fileID: 11400000, guid: 4ee199c72d5474b2c93806f302dca196, type: 2}
   - displayName: PremiumDualMagnet
     config: {fileID: 11400000, guid: 4524035164f2a4a2cba0a18b2d495bdb, type: 2}
+  warningEffect: {fileID: 0}
+  warningFlashInterval: 0.5
   isOperational: 1
   throughputMultiplier: 1
 --- !u!4 &1920504578

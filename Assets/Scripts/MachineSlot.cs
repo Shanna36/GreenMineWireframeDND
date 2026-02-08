@@ -34,11 +34,6 @@ public class MachineSlot : MonoBehaviour
     [Tooltip("Optional warning effect to toggle during maintenance degrade (e.g., a flashing yellow particle system GameObject).")]
     public GameObject warningEffect;
 
-    [Tooltip("How fast the warningEffect flashes on/off (seconds).")]
-    public float warningFlashInterval = 0.5f;
-
-    private Coroutine _warningFlashRoutine;
-
     // --- Event state (maintenance/breakdown) ---
 
     [SerializeField, Tooltip("If false, this slot is considered stopped by an event (throughput = 0).")]
@@ -272,42 +267,17 @@ public class MachineSlot : MonoBehaviour
     }
 
     /// <summary>
-    /// Enables/disables a flashing warning effect to indicate a degraded state.
-    /// Assign a particle effect GameObject in the inspector.
+    /// Enables/disables a warning effect to indicate a degraded state.
+    /// The particle system handles its own animation.
     /// </summary>
     public void SetWarningState(bool enabled)
     {
+        Debug.LogWarning($"[MachineSlot] {name} SetWarningState({enabled}) effect={(warningEffect ? warningEffect.name : "NULL")}");
+
         if (warningEffect == null)
             return;
 
-        if (enabled)
-        {
-            if (_warningFlashRoutine == null)
-                _warningFlashRoutine = StartCoroutine(WarningFlashLoop());
-        }
-        else
-        {
-            if (_warningFlashRoutine != null)
-            {
-                StopCoroutine(_warningFlashRoutine);
-                _warningFlashRoutine = null;
-            }
-            warningEffect.SetActive(false);
-        }
-    }
-
-    private IEnumerator WarningFlashLoop()
-    {
-        // Start visible
-        warningEffect.SetActive(true);
-
-        while (true)
-        {
-            yield return new WaitForSecondsRealtime(warningFlashInterval);
-            
-            if (warningEffect != null)
-                warningEffect.SetActive(!warningEffect.activeSelf);
-        }
+        warningEffect.SetActive(enabled);
     }
 
     // --- Event API (called by EventManager handlers) ---
