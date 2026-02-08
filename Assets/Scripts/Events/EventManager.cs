@@ -168,7 +168,7 @@ public class EventManager : MonoBehaviour
             yield break;
         }
 
-        // NEW: Skip if already broken
+        // Skip if already broken
         if (!targetSlot.IsOperational)
         {
             targetSlot.SetWarningState(false);
@@ -264,7 +264,6 @@ public class EventManager : MonoBehaviour
 
         void Ignore()
         {
-            // Player can ignore for now; the machine remains broken.
             popupUI?.Hide();
             ignored = true;
         }
@@ -278,7 +277,6 @@ public class EventManager : MonoBehaviour
             Ignore
         );
 
-        // End the event routine when the player either repairs OR ignores.
         while (!repaired && !ignored)
         {
             if (gameStateManager != null && gameStateManager.IsGameOver)
@@ -291,48 +289,5 @@ public class EventManager : MonoBehaviour
         }
 
         activeEventRoutine = null;
-    }
-}using UnityEngine;
-using TMPro;
-
-public class ContaminationHUD : MonoBehaviour
-{
-    [Header("References")]
-    [Tooltip("Text element that displays contamination status")]
-    public TMP_Text contaminationText;
-
-    [Header("Display")]
-    public string normalText = "Contamination: Normal";
-    public string contaminatedTextFormat = "Contamination: HIGH (-{0}% value)";
-
-    private float lastMultiplier = -1f;
-
-    private void Awake()
-    {
-        if (contaminationText == null)
-            contaminationText = GetComponent<TMP_Text>();
-    }
-
-    private void Update()
-    {
-        if (PackingArea.Instance == null)
-            return;
-
-        float multiplier = PackingArea.Instance.contaminationMultiplier;
-
-        if (Mathf.Approximately(multiplier, lastMultiplier))
-            return;
-
-        lastMultiplier = multiplier;
-
-        if (multiplier >= 0.999f)
-        {
-            contaminationText.text = normalText;
-        }
-        else
-        {
-            int percentLoss = Mathf.RoundToInt((1f - multiplier) * 100f);
-            contaminationText.text = string.Format(contaminatedTextFormat, percentLoss);
-        }
     }
 }

@@ -18,6 +18,10 @@ public class PackingArea : MonoBehaviour
 
     public static PackingArea Instance { get; private set; }
 
+    [Header("Contamination (V1)")]
+    [Tooltip("Multiplier applied to shipment value during contamination events. 1 = normal, 0.8 = -20% value.")]
+    public float contaminationMultiplier = 1f;
+
     [Serializable]
     public class Hopper
     {
@@ -251,7 +255,7 @@ public class PackingArea : MonoBehaviour
         MaterialType material = GetMaterialType(type);
 
         // In v1 we don't yet have contamination per-hopper; use a default.
-        MoneyManager.Instance.CreditShipment(material, tonnes, defaultContaminationRate);
+        MoneyManager.Instance.CreditShipment(material, tonnes, defaultContaminationRate * contaminationMultiplier);
     }
 
     /// <summary>
@@ -305,14 +309,20 @@ public class PackingArea : MonoBehaviour
                 return MaterialType.Residue;
         }
     }
-}
 
-/// <summary>
-/// Transaction tags used for UI/logging.
-/// </summary>
-public enum TransactionType
-{
-    Ship,
-    Dump,
-    Purchase
+    /// <summary>
+    /// Set contamination multiplier directly (used by events).
+    /// </summary>
+    public void SetContaminationMultiplier(float multiplier)
+    {
+        contaminationMultiplier = Mathf.Clamp(multiplier, 0f, 1f);
+    }
+
+    /// <summary>
+    /// Reset contamination back to normal.
+    /// </summary>
+    public void ClearContamination()
+    {
+        contaminationMultiplier = 1f;
+    }
 }
