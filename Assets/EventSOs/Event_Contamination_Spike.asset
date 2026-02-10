@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a8dab1e1d7a5b4898a5986610cb0ae88, type: 3}
+  m_Name: Event_Contamination_Spike
+  m_EditorClassIdentifier: Assembly-CSharp::EventDefinitionSO
+  eventId: E02
+  eventName: Contamination Spike
+  playerPrompt: 'Contaminants are mixing into the stream. Shipment value is reduced
+    temporarily.
+
+'
+  actionText: Call in extra sorters
+  eventType: 2
+  targetType: 0
+  targetId: Default
+  hasTimer: 1
+  timerSeconds: 20
+  canPayToBypass: 1
+  bypassCost: 500
+  bypassLabel: Call in extra QA

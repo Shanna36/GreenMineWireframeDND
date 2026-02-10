@@ -18,6 +18,10 @@ public class EventManager : MonoBehaviour
     public KeyCode maintenanceTriggerKey = KeyCode.M;
     public EventDefinitionSO maintenanceDebugEvent;
 
+    [Header("Debug: Contamination")]
+    public KeyCode contaminationTriggerKey = KeyCode.C;
+    public EventDefinitionSO contaminationDebugEvent;
+
     private Coroutine activeEventRoutine;
 
     private void Update()
@@ -35,6 +39,12 @@ public class EventManager : MonoBehaviour
         {
             Debug.LogWarning($"[EventManager] Maintenance hotkey pressed. eventId={maintenanceDebugEvent.eventId} type={maintenanceDebugEvent.eventType}");
             TriggerEvent(maintenanceDebugEvent);
+        }
+
+        if (contaminationDebugEvent != null && Input.GetKeyDown(contaminationTriggerKey))
+        {
+            Debug.LogWarning($"[EventManager] Contamination hotkey pressed. eventId={contaminationDebugEvent.eventId} type={contaminationDebugEvent.eventType}");
+            TriggerEvent(contaminationDebugEvent);
         }
     }
 
@@ -62,6 +72,11 @@ public class EventManager : MonoBehaviour
             case EventType.MaintenanceDegrade:
                 Debug.Log("[EventManager] Starting coroutine: HandleMaintenanceDegrade");
                 activeEventRoutine = StartCoroutine(HandleMaintenanceDegrade(def));
+                break;
+
+            case EventType.ContaminationSpike:
+                Debug.Log("[EventManager] Starting coroutine: HandleContaminationSpike");
+                activeEventRoutine = StartCoroutine(HandleContaminationSpike(def));
                 break;
 
             default:
@@ -288,6 +303,93 @@ public class EventManager : MonoBehaviour
             yield return null;
         }
 
+        activeEventRoutine = null;
+    }
+
+    private IEnumerator HandleContaminationSpike(EventDefinitionSO def)
+    {
+        if (PackingArea.Instance == null)
+        {
+            Debug.LogError("ContaminationSpike: PackingArea.Instance is null.");
+            yield break;
+        }
+
+        // V1: fixed severity
+        const float contaminationMult = 0.8f; // -20% value
+
+        // Apply contamination immediately so the HUD updates instantly.
+        PackingArea.Instance.SetContaminationMultiplier(contaminationMult);
+
+        bool decisionMade = false;
+        bool paidToBypass = false;
+
+        void PayToBypass()
+        {
+            if (!def.canPayToBypass) return;
+            if (MoneyManager.Instance == null) return;
+
+            if (!MoneyManager.Instance.TrySpend(def.bypassCost, PayType.Purchase, def.bypassLabel))
+                return;
+
+            paidToBypass = true;
+            decisionMade = true;
+            popupUI?.Hide();
+        }
+
+        void WaitItOut()
+        {
+            decisionMade = true;
+            popupUI?.Hide();
+        }
+
+        popupUI?.Show(
+            def.eventName,
+            def.playerPrompt,
+            def.canPayToBypass ? $"{def.actionText} (£{def.bypassCost})" : "OK",
+            PayToBypass,
+            "Wait",
+            WaitItOut
+        );
+
+        while (!decisionMade)
+        {
+            if (gameStateManager != null && gameStateManager.IsGameOver)
+            {
+                popupUI?.Hide();
+                PackingArea.Instance.ClearContamination();
+                activeEventRoutine = null;
+                yield break;
+            }
+            yield return null;
+        }
+
+        // If paid, clear immediately and end.
+        if (paidToBypass)
+        {
+            PackingArea.Instance.ClearContamination();
+            activeEventRoutine = null;
+            yield break;
+        }
+
+        // Otherwise, keep contamination active for the configured duration.
+        float endTime = Time.time + Mathf.Max(0f, def.timerSeconds);
+        while (Time.time < endTime)
+        {
+            if (gameStateManager != null && gameStateManager.IsGameOver)
+            {
+                PackingArea.Instance.ClearContamination();
+                activeEventRoutine = null;
+                yield break;
+            }
+
+            // We can reuse the existing timer label on the popup if it's still visible.
+            if (popupUI != null && popupUI.root.activeSelf)
+                popupUI.SetTimerVisible(true, endTime - Time.time);
+
+            yield return null;
+        }
+
+        PackingArea.Instance.ClearContamination();
         activeEventRoutine = null;
     }
 }

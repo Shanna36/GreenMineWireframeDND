@@ -5,7 +5,8 @@ public enum EventType
 {
     LogisticsDelay,
     MaintenanceDegrade,
-    // Later: TimedSafety, HardStopRepair, ContaminationSpike
+    ContaminationSpike,
+    // Later: TimedSafety, HardStopRepair
 }
 
 public enum TargetType
