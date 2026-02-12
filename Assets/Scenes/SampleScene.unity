@@ -3664,7 +3664,7 @@ MonoBehaviour:
     currentTonnes: 0
   blockWhenAnyFull: 1
   defaultContaminationRate: 0
-  dumpCostPerDump: 500
+  dumpCostPerDump: 200
 --- !u!1 &398932040
 GameObject:
   m_ObjectHideFlags: 0
