@@ -29,6 +29,9 @@ public class MachineSlot : MonoBehaviour
     // Fired whenever the player selects/changes the machine option for this slot.
     public event Action<MachineSlot> OnSelectionChanged;
 
+    // Fired when operational state changes (e.g., safety event locks a machine).
+    public event Action<MachineSlot, bool> OnOperationalChanged;
+
 
     [Header("Visuals (optional)")]
     [Tooltip("Optional warning effect to toggle during maintenance degrade (e.g., a flashing yellow particle system GameObject).")]
@@ -48,6 +51,26 @@ public class MachineSlot : MonoBehaviour
     public bool HasMachineInstalled => CurrentConfig != null;
 
     public bool IsOperational => isOperational;
+
+    /// <summary>
+    /// Sets whether this machine is operational (throughput forced to 0 when false).
+    /// Used by safety/breakdown events.
+    /// </summary>
+    public void SetOperational(bool operational)
+    {
+        if (isOperational == operational) return;
+        isOperational = operational;
+
+        // Keep multiplier consistent with operational state.
+        if (!isOperational)
+            throughputMultiplier = 0f;
+        else if (throughputMultiplier <= 0f)
+            throughputMultiplier = 1f;
+
+        OnOperationalChanged?.Invoke(this, isOperational);
+        OnSelectionChanged?.Invoke(this);
+    }
+
     public float ThroughputMultiplier => throughputMultiplier;
 
     // The currently selected MachineConfig (or null if none selected).
@@ -300,6 +323,7 @@ public class MachineSlot : MonoBehaviour
         isOperational = false;
         throughputMultiplier = 0f;
         SetWarningState(false);
+        OnOperationalChanged?.Invoke(this, isOperational);
         OnSelectionChanged?.Invoke(this);
     }
 
@@ -308,6 +332,7 @@ public class MachineSlot : MonoBehaviour
         isOperational = true;
         throughputMultiplier = 1f;
         SetWarningState(false);
+        OnOperationalChanged?.Invoke(this, isOperational);
         OnSelectionChanged?.Invoke(this);
     }
 }
