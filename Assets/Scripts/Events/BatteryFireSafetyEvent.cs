@@ -2,6 +2,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 // Note: This script is intentionally standalone so we don't have to refactor your existing EventManager.
 // Drop it on an empty "SafetyEventController" object in the scene.
@@ -40,7 +43,7 @@ public class BatteryFireSafetyEvent : MonoBehaviour
     [Tooltip("Button the player presses to put out the fire.")]
     public Button putOutFireButton;
 
-    [Tooltip("Optional TMP text element for the countdown (if you prefer TMP).")]
+    [Tooltip("Countdown TMP text element.")]
     public TMP_Text countdownTMP;
 
     [Tooltip("Optional smaller 'heads-up' UI shown at start (recommended).")]
@@ -59,7 +62,6 @@ public class BatteryFireSafetyEvent : MonoBehaviour
 
     private void Start()
     {
-        // Show a heads-up so kids aren't confused when the first fire happens.
         if (safetyTipPanel != null)
         {
             safetyTipPanel.SetActive(true);
@@ -75,7 +77,6 @@ public class BatteryFireSafetyEvent : MonoBehaviour
             putOutFireButton.onClick.AddListener(PutOutFire);
         }
 
-        // Trigger exactly one event somewhere in the early play loop.
         float min = Mathf.Min(triggerWindowSeconds.x, triggerWindowSeconds.y);
         float max = Mathf.Max(triggerWindowSeconds.x, triggerWindowSeconds.y);
         float delay = UnityEngine.Random.Range(min, max);
@@ -84,9 +85,39 @@ public class BatteryFireSafetyEvent : MonoBehaviour
 
     private void Update()
     {
+#if UNITY_EDITOR
+        // Dev hotkeys (Editor only). Supports both legacy Input and the new Input System.
+        bool fPressed = false;
+        bool gPressed = false;
+
+#if ENABLE_INPUT_SYSTEM
+        if (Keyboard.current != null)
+        {
+            fPressed = Keyboard.current.fKey.wasPressedThisFrame;
+            gPressed = Keyboard.current.gKey.wasPressedThisFrame;
+        }
+#else
+        fPressed = Input.GetKeyDown(KeyCode.F);
+        gPressed = Input.GetKeyDown(KeyCode.G);
+#endif
+
+        // Press F to force trigger fire event
+        if (!_hasTriggered && fPressed)
+        {
+            Debug.Log("[BatteryFireSafetyEvent] Dev hotkey F pressed -> triggering fire.");
+            TriggerFireOnce();
+        }
+
+        // Press G to instantly escalate (fail)
+        if (_isActive && gPressed)
+        {
+            Debug.Log("[BatteryFireSafetyEvent] Dev hotkey G pressed -> escalating.");
+            Escalate();
+        }
+#endif
+
         if (!_isActive) return;
 
-        // Keep factory running during countdown (no throughput change yet).
         _timeLeft -= Time.deltaTime;
 
         UpdateInteractable();
@@ -98,9 +129,19 @@ public class BatteryFireSafetyEvent : MonoBehaviour
         }
     }
 
+
     private void HideSafetyTip()
     {
         if (safetyTipPanel != null) safetyTipPanel.SetActive(false);
+    }
+
+    /// <summary>
+    /// Dev helper: forces the fire event to trigger immediately (still only triggers once).
+    /// Called by EventManager debug hotkey.
+    /// </summary>
+    public void DebugForceFire()
+    {
+        TriggerFireOnce();
     }
 
     private void TriggerFireOnce()
@@ -108,7 +149,6 @@ public class BatteryFireSafetyEvent : MonoBehaviour
         if (_hasTriggered) return;
         _hasTriggered = true;
 
-        // Only trigger if the magnet exists and a machine is installed.
         if (magnetSeparatorSlot == null || !magnetSeparatorSlot.HasMachineInstalled)
         {
             Debug.LogWarning("[BatteryFireSafetyEvent] Magnet slot missing or not installed — skipping fire event.");
@@ -129,7 +169,6 @@ public class BatteryFireSafetyEvent : MonoBehaviour
         if (!_isActive) return;
         if (!IsPlayerInRange()) return;
 
-        // Success: event ends, no downtime.
         _isActive = false;
         SetFireVFX(false);
         SetWarningUI(false);
@@ -140,24 +179,22 @@ public class BatteryFireSafetyEvent : MonoBehaviour
         if (!_isActive) return;
         _isActive = false;
 
-        // Failure: magnet is down until repaired.
         if (magnetSeparatorSlot != null)
         {
             magnetSeparatorSlot.SetOperational(false);
         }
 
-        // Reuse the same button for repair.
         if (putOutFireButton != null)
         {
             putOutFireButton.onClick.RemoveListener(PutOutFire);
             putOutFireButton.onClick.AddListener(RepairMagnet);
-            putOutFireButton.interactable = true; // allow repair from anywhere for V1.
+            putOutFireButton.interactable = true;
 
             var tmpLabel = putOutFireButton.GetComponentInChildren<TMP_Text>();
             if (tmpLabel != null) tmpLabel.text = $"Repair ({repairCost} coins)";
         }
 
-        SetFireVFX(true); // flames/smoke stay until repaired
+        SetFireVFX(true);
         SetWarningUI(true);
         SetCountdownMessage("Fire spread! Magnet is offline until repaired.");
     }
@@ -180,7 +217,6 @@ public class BatteryFireSafetyEvent : MonoBehaviour
 
         magnetSeparatorSlot.SetOperational(true);
 
-        // Reset button label back to Put Out Fire (for reuse/testing).
         if (putOutFireButton != null)
         {
             putOutFireButton.onClick.RemoveListener(RepairMagnet);
@@ -208,15 +244,13 @@ public class BatteryFireSafetyEvent : MonoBehaviour
     {
         if (putOutFireButton == null) return;
 
-        // During countdown: proximity gate.
-        // During repair mode: allow from anywhere to avoid frustration in V1.
         bool isRepairMode = (magnetSeparatorSlot != null && !magnetSeparatorSlot.IsOperational);
         putOutFireButton.interactable = isRepairMode || IsPlayerInRange();
     }
 
     private bool IsPlayerInRange()
     {
-        if (player == null) return true; // if not set, don't block gameplay.
+        if (player == null) return true;
 
         Transform target = magnetTransform != null ? magnetTransform : (magnetSeparatorSlot != null ? magnetSeparatorSlot.transform : null);
         if (target == null) return true;

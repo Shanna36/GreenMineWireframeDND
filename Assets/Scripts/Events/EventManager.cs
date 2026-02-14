@@ -1,5 +1,8 @@
 using System.Collections;
 using UnityEngine;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 public class EventManager : MonoBehaviour
 {
@@ -22,6 +25,11 @@ public class EventManager : MonoBehaviour
     public KeyCode contaminationTriggerKey = KeyCode.C;
     public EventDefinitionSO contaminationDebugEvent;
 
+    [Header("Debug: Safety")]
+    public KeyCode safetyTriggerKey = KeyCode.F;
+    [Tooltip("Optional: drag your SafetyEventController (BatteryFireSafetyEvent) here to trigger it with the hotkey.")]
+    public BatteryFireSafetyEvent batteryFireSafetyEvent;
+
     private Coroutine activeEventRoutine;
 
     private void Update()
@@ -29,22 +37,77 @@ public class EventManager : MonoBehaviour
         if (gameStateManager != null && gameStateManager.IsGameOver) return;
         if (!enableDebugHotkeys) return;
 
-        if (logisticsDebugEvent != null && Input.GetKeyDown(logisticsTriggerKey))
+        // NOTE: In the Editor, hotkeys only register if the Game view has focus.
+
+        bool LogisticsPressed()
+        {
+#if ENABLE_INPUT_SYSTEM
+            if (Keyboard.current != null && logisticsTriggerKey == KeyCode.L)
+                return Keyboard.current.lKey.wasPressedThisFrame;
+#endif
+            return Input.GetKeyDown(logisticsTriggerKey);
+        }
+
+        bool MaintenancePressed()
+        {
+#if ENABLE_INPUT_SYSTEM
+            if (Keyboard.current != null && maintenanceTriggerKey == KeyCode.M)
+                return Keyboard.current.mKey.wasPressedThisFrame;
+#endif
+            return Input.GetKeyDown(maintenanceTriggerKey);
+        }
+
+        bool ContaminationPressed()
+        {
+#if ENABLE_INPUT_SYSTEM
+            if (Keyboard.current != null && contaminationTriggerKey == KeyCode.C)
+                return Keyboard.current.cKey.wasPressedThisFrame;
+#endif
+            return Input.GetKeyDown(contaminationTriggerKey);
+        }
+
+        bool SafetyPressed()
+        {
+#if ENABLE_INPUT_SYSTEM
+            bool newInput = false;
+            if (Keyboard.current != null)
+            {
+                // We only support F for the New Input System path in V1.
+                if (safetyTriggerKey == KeyCode.F)
+                    newInput = Keyboard.current.fKey.wasPressedThisFrame;
+            }
+
+            // Legacy fallback (useful when Active Input Handling is set to Both)
+            bool legacy = Input.GetKeyDown(safetyTriggerKey);
+            return newInput || legacy;
+#else
+            return Input.GetKeyDown(safetyTriggerKey);
+#endif
+        }
+
+        if (logisticsDebugEvent != null && LogisticsPressed())
         {
             Debug.LogWarning($"[EventManager] Logistics hotkey pressed. eventId={logisticsDebugEvent.eventId} type={logisticsDebugEvent.eventType}");
             TriggerEvent(logisticsDebugEvent);
         }
 
-        if (maintenanceDebugEvent != null && Input.GetKeyDown(maintenanceTriggerKey))
+        if (maintenanceDebugEvent != null && MaintenancePressed())
         {
             Debug.LogWarning($"[EventManager] Maintenance hotkey pressed. eventId={maintenanceDebugEvent.eventId} type={maintenanceDebugEvent.eventType}");
             TriggerEvent(maintenanceDebugEvent);
         }
 
-        if (contaminationDebugEvent != null && Input.GetKeyDown(contaminationTriggerKey))
+        if (contaminationDebugEvent != null && ContaminationPressed())
         {
             Debug.LogWarning($"[EventManager] Contamination hotkey pressed. eventId={contaminationDebugEvent.eventId} type={contaminationDebugEvent.eventType}");
             TriggerEvent(contaminationDebugEvent);
+        }
+
+        if (SafetyPressed())
+        {
+            Debug.LogWarning($"[EventManager] Safety hotkey '{safetyTriggerKey}' detected. batteryFireSafetyEvent={(batteryFireSafetyEvent != null ? "SET" : "NULL")}");
+            if (batteryFireSafetyEvent != null)
+                batteryFireSafetyEvent.DebugForceFire();
         }
     }
 
