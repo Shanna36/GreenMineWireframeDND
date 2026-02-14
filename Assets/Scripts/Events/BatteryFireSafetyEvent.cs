@@ -46,6 +46,9 @@ public class BatteryFireSafetyEvent : MonoBehaviour
     [Tooltip("Countdown TMP text element.")]
     public TMP_Text countdownTMP;
 
+    [Tooltip("Status / escalation message TMP text element.")]
+    public TMP_Text statusTMP;
+
     [Tooltip("Optional smaller 'heads-up' UI shown at start (recommended).")]
     public GameObject safetyTipPanel;
 
@@ -172,6 +175,8 @@ public class BatteryFireSafetyEvent : MonoBehaviour
         _isActive = false;
         SetFireVFX(false);
         SetWarningUI(false);
+        if (statusTMP != null)
+            statusTMP.text = string.Empty;
     }
 
     private void Escalate()
@@ -196,7 +201,8 @@ public class BatteryFireSafetyEvent : MonoBehaviour
 
         SetFireVFX(true);
         SetWarningUI(true);
-        SetCountdownMessage("Fire spread! Magnet is offline until repaired.");
+        if (statusTMP != null)
+            statusTMP.text = "Fire spread! Magnet is offline until repaired.";
     }
 
     private void RepairMagnet()
@@ -211,7 +217,8 @@ public class BatteryFireSafetyEvent : MonoBehaviour
         bool paid = MoneyManager.Instance.TrySpend(repairCost);
         if (!paid)
         {
-            SetCountdownMessage("Not enough coins to repair!");
+            if (statusTMP != null)
+                statusTMP.text = "Not enough coins to repair!";
             return;
         }
 
@@ -228,6 +235,8 @@ public class BatteryFireSafetyEvent : MonoBehaviour
 
         SetFireVFX(false);
         SetWarningUI(false);
+        if (statusTMP != null)
+            statusTMP.text = string.Empty;
     }
 
     private void SetWarningUI(bool on)
