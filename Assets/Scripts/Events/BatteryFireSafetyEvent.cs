@@ -59,12 +59,29 @@ public class BatteryFireSafetyEvent : MonoBehaviour
     [Tooltip("Flames / red glow VFX object to enable during the fire.")]
     public GameObject fireVFX;
 
+    [Header("Lose Condition")]
+    [Tooltip("How many seconds after escalation (machine offline) before the player loses if they don't repair.")]
+    public float timeToLoseAfterEscalation = 20f;
+
+    [Tooltip("Optional: Game over panel to show when the player loses.")]
+    public GameObject gameOverPanel;
+
+    [Tooltip("Optional: TMP text on the game over panel.")]
+    public TMP_Text gameOverMessageTMP;
+
+    [Tooltip("Freeze time when game over occurs.")]
+    public bool freezeTimeOnGameOver = true;
+
     private bool _hasTriggered;
     private bool _isActive;
     private float _timeLeft;
+    private bool _isGameOver;
+    private Coroutine _loseCountdownRoutine;
 
     private void Start()
     {
+        Time.timeScale = 1f;
+
         if (safetyTipPanel != null)
         {
             safetyTipPanel.SetActive(true);
@@ -73,6 +90,9 @@ public class BatteryFireSafetyEvent : MonoBehaviour
 
         SetWarningUI(false);
         SetFireVFX(false);
+
+        if (gameOverPanel != null)
+            gameOverPanel.SetActive(false);
 
         if (putOutFireButton != null)
         {
@@ -88,6 +108,7 @@ public class BatteryFireSafetyEvent : MonoBehaviour
 
     private void Update()
     {
+        if (_isGameOver) return;
 #if UNITY_EDITOR
         // Dev hotkeys (Editor only). Supports both legacy Input and the new Input System.
         bool fPressed = false;
@@ -169,6 +190,12 @@ public class BatteryFireSafetyEvent : MonoBehaviour
 
     private void PutOutFire()
     {
+        if (_loseCountdownRoutine != null)
+        {
+            StopCoroutine(_loseCountdownRoutine);
+            _loseCountdownRoutine = null;
+        }
+
         if (!_isActive) return;
         if (!IsPlayerInRange()) return;
 
@@ -203,6 +230,18 @@ public class BatteryFireSafetyEvent : MonoBehaviour
         SetWarningUI(true);
         if (statusTMP != null)
             statusTMP.text = "Fire spread! Magnet is offline until repaired.";
+
+        // Lose immediately if they cannot afford the repair cost.
+        if (MoneyManager.Instance != null && !MoneyManager.Instance.CanAfford(repairCost))
+        {
+            TriggerGameOver($"Game Over: You need {repairCost} coins to repair the Magnet Separator.");
+            return;
+        }
+
+        // Otherwise, start a grace timer: if they ignore the repair, they lose.
+        if (_loseCountdownRoutine != null)
+            StopCoroutine(_loseCountdownRoutine);
+        _loseCountdownRoutine = StartCoroutine(LoseCountdownAfterEscalation());
     }
 
     private void RepairMagnet()
@@ -217,12 +256,17 @@ public class BatteryFireSafetyEvent : MonoBehaviour
         bool paid = MoneyManager.Instance.TrySpend(repairCost);
         if (!paid)
         {
-            if (statusTMP != null)
-                statusTMP.text = "Not enough coins to repair!";
+            TriggerGameOver($"Game Over: You need {repairCost} coins to repair the Magnet Separator.");
             return;
         }
 
         magnetSeparatorSlot.SetOperational(true);
+
+        if (_loseCountdownRoutine != null)
+        {
+            StopCoroutine(_loseCountdownRoutine);
+            _loseCountdownRoutine = null;
+        }
 
         if (putOutFireButton != null)
         {
@@ -237,6 +281,52 @@ public class BatteryFireSafetyEvent : MonoBehaviour
         SetWarningUI(false);
         if (statusTMP != null)
             statusTMP.text = string.Empty;
+    }
+
+    private void TriggerGameOver(string message)
+    {
+        if (_isGameOver) return;
+        _isGameOver = true;
+
+        // Hide event UI so the screen isn't cluttered.
+        SetWarningUI(false);
+
+        if (statusTMP != null)
+            statusTMP.text = string.Empty;
+
+        if (gameOverPanel != null)
+            gameOverPanel.SetActive(true);
+
+        if (gameOverMessageTMP != null)
+            gameOverMessageTMP.text = message;
+
+        if (freezeTimeOnGameOver)
+            Time.timeScale = 0f;
+
+        // Optional: disable player movement so they can't keep running.
+        if (player != null)
+        {
+            var pm = player.GetComponent<PlayerMovement>();
+            if (pm != null) pm.enabled = false;
+        }
+    }
+
+    private System.Collections.IEnumerator LoseCountdownAfterEscalation()
+    {
+        float t = Mathf.Max(1f, timeToLoseAfterEscalation);
+        while (t > 0f)
+        {
+            if (_isGameOver) yield break;
+
+            // If repaired, stop losing.
+            if (magnetSeparatorSlot != null && magnetSeparatorSlot.IsOperational)
+                yield break;
+
+            t -= Time.deltaTime;
+            yield return null;
+        }
+
+        TriggerGameOver($"Game Over: You didn't repair the Magnet Separator in time. You needed {repairCost} coins.");
     }
 
     private void SetWarningUI(bool on)
