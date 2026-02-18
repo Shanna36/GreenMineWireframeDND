@@ -6,7 +6,7 @@ using System;
 using UnityEngine.InputSystem;
 #endif
 
-// Note: This script is intentionally standalone so we don't have to refactor your existing EventManager.
+// Note: This script is intentionally standalone to void refactoring existing EventManager.
 // Drop it on an empty "SafetyEventController" object in the scene.
 // It will trigger ONE guaranteed battery-fire event within the first ~5 minutes of play.
 public class BatteryFireSafetyEvent : MonoBehaviour
@@ -78,6 +78,8 @@ public class BatteryFireSafetyEvent : MonoBehaviour
     private bool _isGameOver;
     private Coroutine _loseCountdownRoutine;
 
+    private ParticleSystem[] _fireParticles;
+
     private void Start()
     {
         Time.timeScale = 1f;
@@ -90,6 +92,9 @@ public class BatteryFireSafetyEvent : MonoBehaviour
 
         SetWarningUI(false);
         SetFireVFX(false);
+
+        if (fireVFX != null)
+            _fireParticles = fireVFX.GetComponentsInChildren<ParticleSystem>(true);
 
         if (gameOverPanel != null)
             gameOverPanel.SetActive(false);
@@ -232,11 +237,7 @@ public class BatteryFireSafetyEvent : MonoBehaviour
             statusTMP.text = "Fire spread! Magnet is offline until repaired.";
 
         // Lose immediately if they cannot afford the repair cost.
-        if (MoneyManager.Instance != null && !MoneyManager.Instance.CanAfford(repairCost))
-        {
-            TriggerGameOver($"Game Over: You need {repairCost} coins to repair the Magnet Separator.");
-            return;
-        }
+        // Removed per instructions.
 
         // Otherwise, start a grace timer: if they ignore the repair, they lose.
         if (_loseCountdownRoutine != null)
@@ -256,7 +257,8 @@ public class BatteryFireSafetyEvent : MonoBehaviour
         bool paid = MoneyManager.Instance.TrySpend(repairCost);
         if (!paid)
         {
-            TriggerGameOver($"Game Over: You need {repairCost} coins to repair the Magnet Separator.");
+            if (statusTMP != null)
+                statusTMP.text = $"Not enough coins to repair yet! Need {repairCost}.";
             return;
         }
 
@@ -336,7 +338,39 @@ public class BatteryFireSafetyEvent : MonoBehaviour
 
     private void SetFireVFX(bool on)
     {
-        if (fireVFX != null) fireVFX.SetActive(on);
+        if (fireVFX == null) return;
+
+        // Ensure the object is active before playing particles.
+        if (on)
+        {
+            fireVFX.SetActive(true);
+
+            if (_fireParticles == null || _fireParticles.Length == 0)
+                _fireParticles = fireVFX.GetComponentsInChildren<ParticleSystem>(true);
+
+            if (_fireParticles != null)
+            {
+                foreach (var ps in _fireParticles)
+                {
+                    if (ps == null) continue;
+                    ps.Clear(true);
+                    ps.Play(true);
+                }
+            }
+        }
+        else
+        {
+            if (_fireParticles != null)
+            {
+                foreach (var ps in _fireParticles)
+                {
+                    if (ps == null) continue;
+                    ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                }
+            }
+
+            fireVFX.SetActive(false);
+        }
     }
 
     private void UpdateInteractable()

@@ -13,6 +13,21 @@ public class EventManager : MonoBehaviour
     [Header("Debug Hotkeys")]
     public bool enableDebugHotkeys = true;
 
+    [Header("Auto Events (V1)")]
+    [Tooltip("If enabled, the EventManager will automatically trigger the configured debug events on timers (in addition to hotkeys).")]
+    public bool enableAutoEvents = true;
+
+    [Tooltip("Minimum seconds between auto-triggered events.")]
+    public float autoCooldownSeconds = 25f;
+
+    [Tooltip("Guarantee that each auto event triggers at least once within this many seconds after play starts.")]
+    public float guaranteeWindowSeconds = 300f; // ~5 minutes
+
+    [Header("Auto Timing Windows (seconds after start)")]
+    public Vector2 logisticsAutoWindow = new Vector2(45f, 120f);
+    public Vector2 maintenanceAutoWindow = new Vector2(75f, 180f);
+    public Vector2 contaminationAutoWindow = new Vector2(105f, 240f);
+
     [Header("Debug: Logistics")]
     public KeyCode logisticsTriggerKey = KeyCode.L;
     public EventDefinitionSO logisticsDebugEvent;
@@ -32,13 +47,91 @@ public class EventManager : MonoBehaviour
 
     private Coroutine activeEventRoutine;
 
+    // Auto scheduling state
+    private float _nextLogisticsTime = -1f;
+    private float _nextMaintenanceTime = -1f;
+    private float _nextContaminationTime = -1f;
+
+    private bool _logisticsFired;
+    private bool _maintenanceFired;
+    private bool _contaminationFired;
+
+
+    private float _lastAutoEventTime = -999f;
+
+    private float _startTime;
+    private float _guaranteeDeadline;
+
+    private void Start()
+    {
+        _startTime = Time.time;
+        _guaranteeDeadline = _startTime + Mathf.Max(0f, guaranteeWindowSeconds);
+
+        if (enableAutoEvents)
+        {
+            ScheduleInitialAutoTimes();
+        }
+    }
+
+    private void ScheduleInitialAutoTimes()
+    {
+        _logisticsFired = false;
+        _maintenanceFired = false;
+        _contaminationFired = false;
+
+        _lastAutoEventTime = -999f;
+
+        _nextLogisticsTime = PickTimeInWindow(logisticsAutoWindow);
+        _nextMaintenanceTime = PickTimeInWindow(maintenanceAutoWindow);
+        _nextContaminationTime = PickTimeInWindow(contaminationAutoWindow);
+
+        // Ensure we never schedule beyond the guarantee window.
+        _nextLogisticsTime = Mathf.Min(_nextLogisticsTime, _guaranteeDeadline);
+        _nextMaintenanceTime = Mathf.Min(_nextMaintenanceTime, _guaranteeDeadline);
+        _nextContaminationTime = Mathf.Min(_nextContaminationTime, _guaranteeDeadline);
+
+        // Enforce spacing so events don't stack.
+        EnforceSpacing(ref _nextMaintenanceTime, _nextLogisticsTime);
+        EnforceSpacing(ref _nextContaminationTime, _nextMaintenanceTime);
+    }
+
+    private float PickTimeInWindow(Vector2 window)
+    {
+        float min = Mathf.Min(window.x, window.y);
+        float max = Mathf.Max(window.x, window.y);
+        return _startTime + UnityEngine.Random.Range(min, max);
+    }
+
+    private void EnforceSpacing(ref float timeToAdjust, float priorTime)
+    {
+        float minGap = Mathf.Max(0f, autoCooldownSeconds);
+        if (timeToAdjust < priorTime + minGap)
+            timeToAdjust = priorTime + minGap;
+    }
+
+    private bool CanAutoTrigger()
+    {
+        if (!enableAutoEvents) return false;
+        if (gameStateManager != null && gameStateManager.IsGameOver) return false;
+
+        // Don't stack events on top of each other.
+        if (activeEventRoutine != null) return false;
+        if (popupUI != null && popupUI.root != null && popupUI.root.activeSelf) return false;
+
+        // Cooldown between auto events.
+        if (Time.time - _lastAutoEventTime < autoCooldownSeconds) return false;
+
+        return true;
+    }
+
     private void Update()
     {
         if (gameStateManager != null && gameStateManager.IsGameOver) return;
-        if (!enableDebugHotkeys) return;
 
         // NOTE: In the Editor, hotkeys only register if the Game view has focus.
 
+        if (enableDebugHotkeys)
+        {
         bool LogisticsPressed()
         {
 #if ENABLE_INPUT_SYSTEM
@@ -108,6 +201,44 @@ public class EventManager : MonoBehaviour
             Debug.LogWarning($"[EventManager] Safety hotkey '{safetyTriggerKey}' detected. batteryFireSafetyEvent={(batteryFireSafetyEvent != null ? "SET" : "NULL")}");
             if (batteryFireSafetyEvent != null)
                 batteryFireSafetyEvent.DebugForceFire();
+        }
+        }
+
+        // Auto events (V1): trigger each configured event once within the guarantee window.
+        if (enableAutoEvents)
+        {
+            // If we've already fired all three, do nothing.
+            if (!_logisticsFired || !_maintenanceFired || !_contaminationFired)
+            {
+                // If we can't trigger right now (popup already open / cooldown), we simply wait.
+                if (CanAutoTrigger())
+                {
+                    // Ensure we still hit the guarantee window even if the player had popups open a lot.
+                    bool pastGuarantee = Time.time >= _guaranteeDeadline;
+
+                    if (!_logisticsFired && logisticsDebugEvent != null && (Time.time >= _nextLogisticsTime || pastGuarantee))
+                    {
+                        Debug.LogWarning("[EventManager] Auto-triggering Logistics event.");
+                        TriggerEvent(logisticsDebugEvent);
+                        _logisticsFired = true;
+                        _lastAutoEventTime = Time.time;
+                    }
+                    else if (!_maintenanceFired && maintenanceDebugEvent != null && (Time.time >= _nextMaintenanceTime || pastGuarantee))
+                    {
+                        Debug.LogWarning("[EventManager] Auto-triggering Maintenance event.");
+                        TriggerEvent(maintenanceDebugEvent);
+                        _maintenanceFired = true;
+                        _lastAutoEventTime = Time.time;
+                    }
+                    else if (!_contaminationFired && contaminationDebugEvent != null && (Time.time >= _nextContaminationTime || pastGuarantee))
+                    {
+                        Debug.LogWarning("[EventManager] Auto-triggering Contamination event.");
+                        TriggerEvent(contaminationDebugEvent);
+                        _contaminationFired = true;
+                        _lastAutoEventTime = Time.time;
+                    }
+                }
+            }
         }
     }
 

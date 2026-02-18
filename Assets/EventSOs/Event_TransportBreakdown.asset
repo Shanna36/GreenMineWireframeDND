@@ -23,5 +23,5 @@ MonoBehaviour:
   hasTimer: 1
   timerSeconds: 30
   canPayToBypass: 1
-  bypassCost: 500
+  bypassCost: 300
   bypassLabel: Hire Truck
