@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a8dab1e1d7a5b4898a5986610cb0ae88, type: 3}
-  m_Name: Event_TransportBreakdown
+  m_Name: Event_Maintenance_Conveyor
   m_EditorClassIdentifier: Assembly-CSharp::EventDefinitionSO
-  eventId: E00
-  eventName: Logistics Event
-  playerPrompt: One of your trucks has broken down so there is a delay in shipping
-    your materials.
-  actionText: Hire Replacement Truck
-  eventType: 0
-  targetType: 0
-  targetId: Default
+  eventId: E03
+  eventName: Maintenance Required
+  playerPrompt: Oh no! A conveyor belt is about to snap-- it needs fixed before it
+    breaks completely!
+  actionText: Maintenance Cost
+  eventType: 1
+  targetType: 2
+  targetId: EddyCurrentSeparator
   hasTimer: 1
   timerSeconds: 30
   canPayToBypass: 1
-  bypassCost: 300
-  bypassLabel: Hire Truck
+  bypassCost: 200
+  bypassLabel: Maintenance

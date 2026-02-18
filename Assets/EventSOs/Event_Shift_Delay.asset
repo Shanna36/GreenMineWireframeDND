@@ -10,12 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a8dab1e1d7a5b4898a5986610cb0ae88, type: 3}
-  m_Name: Event_TransportBreakdown
+  m_Name: Event_Shift_Delay
   m_EditorClassIdentifier: Assembly-CSharp::EventDefinitionSO
-  eventId: E00
-  eventName: Logistics Event
-  playerPrompt: One of your trucks has broken down so there is a delay in shipping
-    your materials.
+  eventId: E05
+  eventName: Shift Delay
+  playerPrompt: Icy Roads are amking hard for workers to get in to the faccility.
+    You can pay people overtime to extend their shift or just wait for the others
+    to arrive
   actionText: Hire Replacement Truck
   eventType: 0
   targetType: 0
@@ -24,4 +25,4 @@ MonoBehaviour:
   timerSeconds: 30
   canPayToBypass: 1
   bypassCost: 300
-  bypassLabel: Hire Truck
+  bypassLabel: Pay Overtime

@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EventDefinitionSO
   eventId: E01
   eventName: Maintenance Required
-  playerPrompt: The Optical Sorter is running poorly and needs maintenance.
+  playerPrompt: The Optical Sorter is running poorly due to a dirty lens and needs
+    maintenance.
   actionText: Maintenance Cost
   eventType: 1
   targetType: 2

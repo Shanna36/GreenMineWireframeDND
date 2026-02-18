@@ -32,9 +32,15 @@ public class EventManager : MonoBehaviour
     public KeyCode logisticsTriggerKey = KeyCode.L;
     public EventDefinitionSO logisticsDebugEvent;
 
+    [Tooltip("Optional: If set, auto-trigger will randomly pick one of these Logistics events instead of always using logisticsDebugEvent.")]
+    public EventDefinitionSO[] logisticsAutoPool;
+
     [Header("Debug: Maintenance")]
     public KeyCode maintenanceTriggerKey = KeyCode.M;
     public EventDefinitionSO maintenanceDebugEvent;
+
+    [Tooltip("Optional: If set, auto-trigger will randomly pick one of these Maintenance events instead of always using maintenanceDebugEvent.")]
+    public EventDefinitionSO[] maintenanceAutoPool;
 
     [Header("Debug: Contamination")]
     public KeyCode contaminationTriggerKey = KeyCode.C;
@@ -122,6 +128,22 @@ public class EventManager : MonoBehaviour
         if (Time.time - _lastAutoEventTime < autoCooldownSeconds) return false;
 
         return true;
+    }
+
+    private EventDefinitionSO PickFromPoolOrFallback(EventDefinitionSO[] pool, EventDefinitionSO fallback)
+    {
+        if (pool != null && pool.Length > 0)
+        {
+            // Filter nulls defensively.
+            int safety = 0;
+            while (safety < 10)
+            {
+                var choice = pool[UnityEngine.Random.Range(0, pool.Length)];
+                if (choice != null) return choice;
+                safety++;
+            }
+        }
+        return fallback;
     }
 
     private void Update()
@@ -216,19 +238,27 @@ public class EventManager : MonoBehaviour
                     // Ensure we still hit the guarantee window even if the player had popups open a lot.
                     bool pastGuarantee = Time.time >= _guaranteeDeadline;
 
-                    if (!_logisticsFired && logisticsDebugEvent != null && (Time.time >= _nextLogisticsTime || pastGuarantee))
+                    if (!_logisticsFired && (Time.time >= _nextLogisticsTime || pastGuarantee))
                     {
-                        Debug.LogWarning("[EventManager] Auto-triggering Logistics event.");
-                        TriggerEvent(logisticsDebugEvent);
-                        _logisticsFired = true;
-                        _lastAutoEventTime = Time.time;
+                        var chosen = PickFromPoolOrFallback(logisticsAutoPool, logisticsDebugEvent);
+                        if (chosen != null)
+                        {
+                            Debug.LogWarning($"[EventManager] Auto-triggering Logistics event: {chosen.eventName} (id={chosen.eventId}).");
+                            TriggerEvent(chosen);
+                            _logisticsFired = true;
+                            _lastAutoEventTime = Time.time;
+                        }
                     }
-                    else if (!_maintenanceFired && maintenanceDebugEvent != null && (Time.time >= _nextMaintenanceTime || pastGuarantee))
+                    else if (!_maintenanceFired && (Time.time >= _nextMaintenanceTime || pastGuarantee))
                     {
-                        Debug.LogWarning("[EventManager] Auto-triggering Maintenance event.");
-                        TriggerEvent(maintenanceDebugEvent);
-                        _maintenanceFired = true;
-                        _lastAutoEventTime = Time.time;
+                        var chosen = PickFromPoolOrFallback(maintenanceAutoPool, maintenanceDebugEvent);
+                        if (chosen != null)
+                        {
+                            Debug.LogWarning($"[EventManager] Auto-triggering Maintenance event: {chosen.eventName} (id={chosen.eventId}).");
+                            TriggerEvent(chosen);
+                            _maintenanceFired = true;
+                            _lastAutoEventTime = Time.time;
+                        }
                     }
                     else if (!_contaminationFired && contaminationDebugEvent != null && (Time.time >= _nextContaminationTime || pastGuarantee))
                     {
