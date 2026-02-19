@@ -73,6 +73,7 @@ public class BatteryFireSafetyEvent : MonoBehaviour
     public bool freezeTimeOnGameOver = true;
 
     private bool _hasTriggered;
+    private bool _triggerQueued;
     private bool _isActive;
     private float _timeLeft;
     private bool _isGameOver;
@@ -175,15 +176,33 @@ public class BatteryFireSafetyEvent : MonoBehaviour
 
     private void TriggerFireOnce()
     {
+        // Only triggers once, but we *don't* set _hasTriggered until the event actually starts.
         if (_hasTriggered) return;
-        _hasTriggered = true;
+
+        // If another event is active, queue this to retry shortly.
+        if (!EventLock.TryAcquire(nameof(BatteryFireSafetyEvent)))
+        {
+            if (!_triggerQueued)
+            {
+                _triggerQueued = true;
+                float retryDelay = UnityEngine.Random.Range(6f, 12f);
+                Debug.Log($"[BatteryFireSafetyEvent] Another event is active ({EventLock.Owner}). Queuing fire event in {retryDelay:0.0}s...");
+                Invoke(nameof(TriggerFireOnce), retryDelay);
+            }
+            return;
+        }
+
+        // We acquired the lock — clear queued flag.
+        _triggerQueued = false;
 
         if (magnetSeparatorSlot == null || !magnetSeparatorSlot.HasMachineInstalled)
         {
             Debug.LogWarning("[BatteryFireSafetyEvent] Magnet slot missing or not installed — skipping fire event.");
+            EventLock.Release(nameof(BatteryFireSafetyEvent));
             return;
         }
 
+        _hasTriggered = true;
         _isActive = true;
         _timeLeft = Mathf.Max(1f, countdownSeconds);
 
@@ -209,6 +228,8 @@ public class BatteryFireSafetyEvent : MonoBehaviour
         SetWarningUI(false);
         if (statusTMP != null)
             statusTMP.text = string.Empty;
+
+        EventLock.Release(nameof(BatteryFireSafetyEvent));
     }
 
     private void Escalate()
@@ -283,12 +304,16 @@ public class BatteryFireSafetyEvent : MonoBehaviour
         SetWarningUI(false);
         if (statusTMP != null)
             statusTMP.text = string.Empty;
+
+        EventLock.Release(nameof(BatteryFireSafetyEvent));
     }
 
     private void TriggerGameOver(string message)
     {
         if (_isGameOver) return;
         _isGameOver = true;
+
+        EventLock.Release(nameof(BatteryFireSafetyEvent));
 
         // Hide event UI so the screen isn't cluttered.
         SetWarningUI(false);
@@ -406,5 +431,10 @@ public class BatteryFireSafetyEvent : MonoBehaviour
     {
         if (countdownTMP != null)
             countdownTMP.text = message;
+    }
+
+    private void OnDisable()
+    {
+        EventLock.Release(nameof(BatteryFireSafetyEvent));
     }
 }
