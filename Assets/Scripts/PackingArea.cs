@@ -11,6 +11,7 @@ using UnityEngine.UI;
 /// - When a hopper is shipped, it delegates payout logic to MoneyManager.
 ///
 /// NOTE: Money is owned by MoneyManager (single source of truth).
+/// - Requires a Collider with IsTrigger enabled to detect when the player is in the shipping zone.
 /// </summary>
 public class PackingArea : MonoBehaviour
 {
@@ -75,7 +76,14 @@ public class PackingArea : MonoBehaviour
                 // v1 behaviour: only allow shipping when full.
                 // Events can temporarily disable shipping (e.g. transport breakdown).
                 bool globallyDisabled = PackingArea.Instance != null && PackingArea.Instance.IsShippingDisabled;
-                shipButton.interactable = IsFull && !globallyDisabled;
+
+                bool playerOk = true;
+                if (PackingArea.Instance != null && PackingArea.Instance.requirePlayerInZoneToShip)
+                {
+                    playerOk = PackingArea.Instance.IsPlayerInShippingZone;
+                }
+
+                shipButton.interactable = IsFull && !globallyDisabled && playerOk;
             }
         }
     }
@@ -89,6 +97,22 @@ public class PackingArea : MonoBehaviour
     [Header("Behaviour")]
     [Tooltip("If true, any full hopper blocks all processing.")]
     public bool blockWhenAnyFull = true;
+
+    [Header("Shipping Zone")]
+    [Tooltip("Only allow shipping when the player is inside this PackingArea's trigger collider.")]
+    [SerializeField] private bool requirePlayerInZoneToShip = true;
+
+    [Tooltip("Tag used to identify the player object for the shipping zone trigger.")]
+    [SerializeField] private string playerTag = "Player";
+
+    // Tracks which colliders belonging to the player are currently inside the packing/dispatch trigger zone.
+    // Using a set avoids getting "stuck" if we receive multiple enter events.
+    private readonly HashSet<Collider> playerCollidersInside = new HashSet<Collider>();
+
+    /// <summary>
+    /// True when the player is currently inside the packing/dispatch trigger zone.
+    /// </summary>
+    public bool IsPlayerInShippingZone => playerCollidersInside.Count > 0;
 
     [Tooltip("If you don't have contamination flowing through the sim yet, keep this at 0.")]
     [Range(0f, 1f)]
@@ -111,6 +135,13 @@ public class PackingArea : MonoBehaviour
     /// True when shipping is currently disabled by an event.
     /// </summary>
     public bool IsShippingDisabled => shippingDisabled;
+
+    private void OnEnable()
+    {
+        // Safety: ensure we don't carry any stale trigger state.
+        playerCollidersInside.Clear();
+        RefreshAllUI();
+    }
 
     private void Awake()
     {
@@ -233,6 +264,13 @@ public class PackingArea : MonoBehaviour
             return;
         }
 
+        // If we require the player to be in the dispatch zone, block shipping when they're outside it.
+        if (requirePlayerInZoneToShip && !IsPlayerInShippingZone)
+        {
+            Debug.Log($"Ship blocked: player is not in the packing/dispatch zone. ({type})");
+            return;
+        }
+
         // v1: only ship if full (matches button interactable)
         if (!hopper.IsFull) return;
 
@@ -288,6 +326,35 @@ public class PackingArea : MonoBehaviour
         if (!paid)
         {
             Debug.Log("DumpResidueClicked: Dump failed (insufficient funds or missing MoneyManager).");
+        }
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (!requirePlayerInZoneToShip) return;
+        if (other == null) return;
+
+        // Many character setups tag the root "Player" object, while the collider lives on a child.
+        bool isPlayer = other.CompareTag(playerTag) || other.transform.root.CompareTag(playerTag);
+        if (!isPlayer) return;
+
+        if (playerCollidersInside.Add(other))
+        {
+            RefreshAllUI();
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (!requirePlayerInZoneToShip) return;
+        if (other == null) return;
+
+        bool isPlayer = other.CompareTag(playerTag) || other.transform.root.CompareTag(playerTag);
+        if (!isPlayer) return;
+
+        if (playerCollidersInside.Remove(other))
+        {
+            RefreshAllUI();
         }
     }
 

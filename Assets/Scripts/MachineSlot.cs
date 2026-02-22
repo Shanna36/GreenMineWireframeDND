@@ -37,6 +37,9 @@ public class MachineSlot : MonoBehaviour
     [Tooltip("Optional warning effect to toggle during maintenance degrade (e.g., a flashing yellow particle system GameObject).")]
     public GameObject warningEffect;
 
+    [Tooltip("Optional placeholder visual (e.g., the cube/ghost base) to hide once a machine is installed.")]
+    [SerializeField] private GameObject placeholderVisual;
+
     // --- Event state (maintenance/breakdown) ---
 
     [SerializeField, Tooltip("If false, this slot is considered stopped by an event (throughput = 0).")]
@@ -169,6 +172,7 @@ public class MachineSlot : MonoBehaviour
     {
         // Ensure a consistent initial state even if the menu is left enabled in the editor.
         SetMenuVisible(false);
+        UpdatePlaceholderVisual();
     }
 
     private void SetMenuVisible(bool isVisible)
@@ -180,6 +184,14 @@ public class MachineSlot : MonoBehaviour
         // While testing UI, keep cursor visible/unlocked.
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
+    }
+
+    private void UpdatePlaceholderVisual()
+    {
+        if (placeholderVisual == null) return;
+
+        // Show placeholder only when no machine is installed.
+        placeholderVisual.SetActive(!HasMachineInstalled);
     }
 
     /// <summary>
@@ -220,6 +232,7 @@ public class MachineSlot : MonoBehaviour
         if (index == currentIndex)
         {
             Debug.Log($"[MachineSlot] Option {index} already selected on {name}. No action taken.");
+            UpdatePlaceholderVisual();
             SetMenuVisible(false);
             return;
         }
@@ -263,6 +276,7 @@ public class MachineSlot : MonoBehaviour
         );
 
         currentIndex = index;
+        UpdatePlaceholderVisual();
 
         // Installing/changing a machine returns it to normal operation.
         isOperational = true;
