@@ -3,6 +3,7 @@ using UnityEngine.EventSystems;
 using System;
 using System.Collections;
 using System.Reflection;
+using System.Collections.Generic;
 
 [System.Serializable]
 public class MachineOption
@@ -25,6 +26,8 @@ public class MachineSlot : MonoBehaviour
 
     private GameObject currentMachineInstance;
     private int currentIndex = -1;           // Selected option index
+
+
 
     // Fired whenever the player selects/changes the machine option for this slot.
     public event Action<MachineSlot> OnSelectionChanged;
@@ -194,6 +197,32 @@ public class MachineSlot : MonoBehaviour
         placeholderVisual.SetActive(!HasMachineInstalled);
     }
 
+    private void SnapInstanceToSpawn(GameObject instance, Transform spawn)
+    {
+        if (instance == null || spawn == null) return;
+
+        // If the prefab has a Rigidbody, moving it via transform while it's dynamic can cause jitter.
+        // We set the Rigidbody pose directly when present.
+        Rigidbody rb = instance.GetComponentInChildren<Rigidbody>();
+        if (rb != null && rb.gameObject == instance)
+        {
+            rb.position = spawn.position;
+            rb.rotation = spawn.rotation;
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.Sleep();
+        }
+
+        // Ensure exact local alignment to the spawn point.
+        instance.transform.SetParent(spawn, worldPositionStays: false);
+        instance.transform.localPosition = Vector3.zero;
+        instance.transform.localRotation = Quaternion.identity;
+        instance.transform.localScale = Vector3.one;
+
+        // Extra safety: sometimes the visible mesh is offset on a child; if so, keep the root aligned
+        // and do NOT try to "fix" children here (that should be corrected in the prefab).
+    }
+
     /// <summary>
     /// Spawn one of the machine options into this slot.
     /// This can be called from UI buttons with the appropriate index.
@@ -268,12 +297,11 @@ public class MachineSlot : MonoBehaviour
 
         Transform parent = spawnPoint != null ? spawnPoint : transform;
 
-        currentMachineInstance = Instantiate(
-            option.config.machinePrefab,
-            parent.position,
-            parent.rotation,
-            parent
-        );
+        // Instantiate without parenting first, then snap/parent in a controlled way.
+        currentMachineInstance = Instantiate(option.config.machinePrefab);
+        SnapInstanceToSpawn(currentMachineInstance, parent);
+
+    
 
         currentIndex = index;
         UpdatePlaceholderVisual();
