@@ -217,12 +217,22 @@ public class MachineSlot : MonoBehaviour
 
         // Ensure exact local alignment to the spawn point.
         // IMPORTANT: Do NOT override scale here — the prefab/model may require a non-1 scale.
-        Vector3 authoredLocalScale = instance.transform.localScale;
+      // Ensure exact alignment to the spawn point.
+    // IMPORTANT:
+    // - Do NOT override scale here — the prefab/model may require a non-1 scale.
+    // - Preserve the prefab's authored WORLD rotation so conveyors/pivots you've aligned in the prefab stay correct.
+    Vector3 authoredLocalScale = instance.transform.localScale;
+    Quaternion authoredWorldRotation = instance.transform.rotation;
 
-        instance.transform.SetParent(spawn, worldPositionStays: false);
-        instance.transform.localPosition = Vector3.zero;
-        instance.transform.localRotation = Quaternion.identity;
-        instance.transform.localScale = authoredLocalScale;
+    // Parent while preserving current world transform.
+    instance.transform.SetParent(spawn, worldPositionStays: true);
+
+        // Snap position to spawn, but keep the prefab's world rotation.
+    instance.transform.position = spawn.position;
+    instance.transform.rotation = authoredWorldRotation;
+
+// Restore authored scale.
+    instance.transform.localScale = authoredLocalScale;
 
         // Extra safety: sometimes the visible mesh is offset on a child; if so, keep the root aligned
         // and do NOT try to "fix" children here (that should be corrected in the prefab).
