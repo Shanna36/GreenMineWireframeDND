@@ -200,6 +200,8 @@ public class MachineSlot : MonoBehaviour
     private void SnapInstanceToSpawn(GameObject instance, Transform spawn)
     {
         if (instance == null || spawn == null) return;
+        Debug.Log($"[MachineSlot] SnapInstanceToSpawn: instance='{instance.name}', spawn='{spawn.name}', spawnWorldPos={spawn.position}, spawnWorldRot={spawn.rotation.eulerAngles}");
+        Debug.Log($"[MachineSlot] SnapInstanceToSpawn: authoredLocalScale={instance.transform.localScale}");
 
         // If the prefab has a Rigidbody, moving it via transform while it's dynamic can cause jitter.
         // We set the Rigidbody pose directly when present.
@@ -214,10 +216,13 @@ public class MachineSlot : MonoBehaviour
         }
 
         // Ensure exact local alignment to the spawn point.
+        // IMPORTANT: Do NOT override scale here — the prefab/model may require a non-1 scale.
+        Vector3 authoredLocalScale = instance.transform.localScale;
+
         instance.transform.SetParent(spawn, worldPositionStays: false);
         instance.transform.localPosition = Vector3.zero;
         instance.transform.localRotation = Quaternion.identity;
-        instance.transform.localScale = Vector3.one;
+        instance.transform.localScale = authoredLocalScale;
 
         // Extra safety: sometimes the visible mesh is offset on a child; if so, keep the root aligned
         // and do NOT try to "fix" children here (that should be corrected in the prefab).
@@ -230,30 +235,34 @@ public class MachineSlot : MonoBehaviour
     public void SelectOption(int index)
     {
         Debug.Log($"[MachineSlot] SelectOption({index}) on {name}");
+        // Extra debug to confirm the full decision chain for spawning.
+        Debug.Log($"[MachineSlot] State before selection: currentIndex={currentIndex}, HasMachineInstalled={HasMachineInstalled}, CurrentConfig={(CurrentConfig ? CurrentConfig.name : "NULL")}");
+        Debug.Log($"[MachineSlot] options={(options == null ? "NULL" : options.Length.ToString())}, spawnPoint={(spawnPoint ? spawnPoint.name : "NULL")}");
 
         if (options == null || options.Length == 0)
         {
-            Debug.LogWarning($"[MachineSlot] No options assigned on {name}.");
+            Debug.LogWarning($"[MachineSlot] EARLY RETURN: options missing/empty on {name}. options={(options == null ? "NULL" : options.Length.ToString())}");
             return;
         }
 
         if (index < 0 || index >= options.Length)
         {
-            Debug.LogWarning($"[MachineSlot] Index {index} is out of range on {name}.");
+            Debug.LogWarning($"[MachineSlot] EARLY RETURN: index out of range. index={index}, optionsLength={options.Length} on {name}.");
             return;
         }
 
         MachineOption option = options[index];
+        Debug.Log($"[MachineSlot] Selected option: index={index}, displayName='{option?.displayName}', config={(option != null && option.config != null ? option.config.name : "NULL")}");
 
         if (option.config == null)
         {
-            Debug.LogWarning($"[MachineSlot] Option {index} on {name} has no MachineConfig assigned.");
+            Debug.LogWarning($"[MachineSlot] EARLY RETURN: Option {index} on {name} has no MachineConfig assigned.");
             return;
         }
 
         if (option.config.machinePrefab == null)
         {
-            Debug.LogWarning($"[MachineSlot] MachineConfig '{option.config.name}' has no prefab assigned.");
+            Debug.LogWarning($"[MachineSlot] EARLY RETURN: MachineConfig '{option.config.name}' has no prefab assigned (machinePrefab is NULL).");
             return;
         }
 
@@ -261,6 +270,7 @@ public class MachineSlot : MonoBehaviour
         if (index == currentIndex)
         {
             Debug.Log($"[MachineSlot] Option {index} already selected on {name}. No action taken.");
+            Debug.Log($"[MachineSlot] EARLY RETURN: re-select of current option. currentIndex={currentIndex}.");
             UpdatePlaceholderVisual();
             SetMenuVisible(false);
             return;
@@ -268,6 +278,7 @@ public class MachineSlot : MonoBehaviour
 
         // --- Purchase check (v1) ---
         // Charge only the upgrade delta (no refund on downgrades).
+        Debug.Log($"[MachineSlot] Purchase check: newConfig={option.config.name}, newCost={GetCost(option.config)}, oldConfig={(CurrentConfig ? CurrentConfig.name : "NULL")}, oldCost={GetCost(CurrentConfig)}");
         int newCost = GetCost(option.config);
         int oldCost = GetCost(CurrentConfig);
         int upgradeCost = Mathf.Max(0, newCost - oldCost);
@@ -276,14 +287,14 @@ public class MachineSlot : MonoBehaviour
         {
             if (MoneyManager.Instance == null)
             {
-                Debug.LogError($"[MachineSlot] Cannot purchase '{GetMachineLabel(option)}' because MoneyManager.Instance is null.");
+                Debug.LogError($"[MachineSlot] EARLY RETURN: Cannot purchase '{GetMachineLabel(option)}' because MoneyManager.Instance is null. upgradeCost={upgradeCost}");
                 return;
             }
 
             bool paid = MoneyManager.Instance.TryPurchase(upgradeCost, GetMachineLabel(option));
             if (!paid)
             {
-                Debug.Log($"[MachineSlot] Not enough funds to purchase '{GetMachineLabel(option)}' (cost {upgradeCost}).");
+                Debug.LogWarning($"[MachineSlot] EARLY RETURN: Not enough funds to purchase '{GetMachineLabel(option)}' (upgradeCost {upgradeCost}).");
                 return;
             }
         }
@@ -295,13 +306,36 @@ public class MachineSlot : MonoBehaviour
             currentMachineInstance = null;
         }
 
+        Debug.Log($"[MachineSlot] Spawning prefab '{option.config.machinePrefab.name}'. Parent target = {(spawnPoint != null ? spawnPoint.name : "<this transform>")}");
+
         Transform parent = spawnPoint != null ? spawnPoint : transform;
 
         // Instantiate without parenting first, then snap/parent in a controlled way.
         currentMachineInstance = Instantiate(option.config.machinePrefab);
+
+        if (currentMachineInstance == null)
+        {
+            Debug.LogError($"[MachineSlot] Instantiate returned NULL for prefab '{option.config.machinePrefab.name}' on {name}.");
+            return;
+        }
+
+        Debug.Log($"[MachineSlot] Spawned instance '{currentMachineInstance.name}' (activeSelf={currentMachineInstance.activeSelf}) before snap. WorldPos={currentMachineInstance.transform.position} WorldScale={currentMachineInstance.transform.lossyScale}");
+
         SnapInstanceToSpawn(currentMachineInstance, parent);
 
-    
+        // Post-snap diagnostics: rendering + transforms
+        var renderers = currentMachineInstance.GetComponentsInChildren<Renderer>(includeInactive: true);
+        Debug.Log($"[MachineSlot] After snap: parent={currentMachineInstance.transform.parent?.name}, localPos={currentMachineInstance.transform.localPosition}, localRot={currentMachineInstance.transform.localRotation.eulerAngles}, localScale={currentMachineInstance.transform.localScale}. RenderersFound={renderers.Length}");
+        if (renderers.Length == 0)
+        {
+            Debug.LogWarning($"[MachineSlot] Spawned instance '{currentMachineInstance.name}' has NO Renderer components in children. It may be an empty root/pivot prefab or children are missing/disabled.");
+        }
+        else
+        {
+            // Log the first renderer as a quick sanity check.
+            var r0 = renderers[0];
+            Debug.Log($"[MachineSlot] First renderer: '{r0.name}' enabled={r0.enabled} activeInHierarchy={r0.gameObject.activeInHierarchy} layer={r0.gameObject.layer}");
+        }
 
         currentIndex = index;
         UpdatePlaceholderVisual();
