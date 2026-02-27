@@ -200,42 +200,42 @@ public class MachineSlot : MonoBehaviour
     private void SnapInstanceToSpawn(GameObject instance, Transform spawn)
     {
         if (instance == null || spawn == null) return;
-        Debug.Log($"[MachineSlot] SnapInstanceToSpawn: instance='{instance.name}', spawn='{spawn.name}', spawnWorldPos={spawn.position}, spawnWorldRot={spawn.rotation.eulerAngles}");
-        Debug.Log($"[MachineSlot] SnapInstanceToSpawn: authoredLocalScale={instance.transform.localScale}");
 
-        // If the prefab has a Rigidbody, moving it via transform while it's dynamic can cause jitter.
-        // We set the Rigidbody pose directly when present.
-        Rigidbody rb = instance.GetComponentInChildren<Rigidbody>();
-        if (rb != null && rb.gameObject == instance)
+        // Preserve the prefab's authored transforms.
+        Vector3 authoredLocalScale = instance.transform.localScale;
+        Quaternion authoredWorldRotation = instance.transform.rotation;
+
+        Debug.Log(
+            $"[MachineSlot] SnapInstanceToSpawn: instance='{instance.name}', spawn='{spawn.name}', " +
+            $"spawnWorldPos={spawn.position}, spawnWorldRot={spawn.rotation.eulerAngles}"
+        );
+        Debug.Log($"[MachineSlot] SnapInstanceToSpawn: authoredLocalScale={authoredLocalScale}");
+        Debug.Log($"[MachineSlot] SnapInstanceToSpawn: authoredWorldRotation={authoredWorldRotation.eulerAngles}");
+
+        // Parent while preserving current WORLD transform.
+        instance.transform.SetParent(spawn, worldPositionStays: true);
+
+        // Snap position to the spawn point, but keep the prefab's authored WORLD rotation.
+        instance.transform.position = spawn.position;
+        instance.transform.rotation = authoredWorldRotation;
+
+        // Restore authored scale (in case parenting affected it).
+        instance.transform.localScale = authoredLocalScale;
+
+        // If the prefab has a Rigidbody on the ROOT, set its pose directly to avoid jitter.
+        // IMPORTANT: Keep authored rotation (do not force spawn rotation).
+        Rigidbody rb = instance.GetComponent<Rigidbody>();
+        if (rb != null)
         {
             rb.position = spawn.position;
-            rb.rotation = spawn.rotation;
+            rb.rotation = authoredWorldRotation;
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
             rb.Sleep();
         }
 
-        // Ensure exact local alignment to the spawn point.
-        // IMPORTANT: Do NOT override scale here — the prefab/model may require a non-1 scale.
-      // Ensure exact alignment to the spawn point.
-    // IMPORTANT:
-    // - Do NOT override scale here — the prefab/model may require a non-1 scale.
-    // - Preserve the prefab's authored WORLD rotation so conveyors/pivots you've aligned in the prefab stay correct.
-    Vector3 authoredLocalScale = instance.transform.localScale;
-    Quaternion authoredWorldRotation = instance.transform.rotation;
-
-    // Parent while preserving current world transform.
-    instance.transform.SetParent(spawn, worldPositionStays: true);
-
-        // Snap position to spawn, but keep the prefab's world rotation.
-    instance.transform.position = spawn.position;
-    instance.transform.rotation = authoredWorldRotation;
-
-// Restore authored scale.
-    instance.transform.localScale = authoredLocalScale;
-
-        // Extra safety: sometimes the visible mesh is offset on a child; if so, keep the root aligned
-        // and do NOT try to "fix" children here (that should be corrected in the prefab).
+        // Note: If the visible mesh is offset on a child, fix that in the prefab (preferred),
+        // rather than trying to correct child transforms here.
     }
 
     /// <summary>
