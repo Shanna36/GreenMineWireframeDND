@@ -15,7 +15,7 @@ MonoBehaviour:
   machineName: OpticalMedium
   machineType: 0
   tier: 2
-  cost: 2500
+  cost: 500
   throughputTonnesPerHour: 20
   contaminationPercent: 0.01
-  machinePrefab: {fileID: 3754729864346013966, guid: fb70dc11e4c6942038a8c328b7653ebd, type: 3}
+  machinePrefab: {fileID: 1957491032859082183, guid: 548129d7b8fe246dd8d1985730932975, type: 3}
