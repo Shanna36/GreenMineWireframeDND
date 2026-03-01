@@ -18,4 +18,4 @@ MonoBehaviour:
   cost: 600
   throughputTonnesPerHour: 20
   contaminationPercent: 0.1
-  machinePrefab: {fileID: 3359129896588838077, guid: 7c95feb1b91814aa5be3f1dfca6c396f, type: 3}
+  machinePrefab: {fileID: 3627095476544072267, guid: 5f5c0d98e0da24c2caf3da79d75c7f4d, type: 3}
