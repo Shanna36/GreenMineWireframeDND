@@ -15,7 +15,7 @@ MonoBehaviour:
   machineName: Sorting_Premium
   machineType: 5
   tier: 3
-  cost: 6000
+  cost: 1200
   throughputTonnesPerHour: 35
   contaminationPercent: 0.01
   machinePrefab: {fileID: 4606556659575416619, guid: 7050c00d95fec4253835b629de8b9dd9, type: 3}
