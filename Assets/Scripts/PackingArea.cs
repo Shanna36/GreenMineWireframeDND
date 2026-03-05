@@ -35,8 +35,15 @@ public class PackingArea : MonoBehaviour
         public float capacityTonnes = 2f;
 
         [Header("UI (optional)")]
+        [Tooltip("Legacy horizontal bar support (optional). You can leave this empty when using Image fill bars.")]
         public Slider slider;
+
+        [Tooltip("Preferred: assign the Image that should fill (set its Image Type to Filled).")]
+        public Image fillImage;
+
+        [Tooltip("Optional text (e.g., '0 / 2 t').")]
         public TMP_Text label;
+
         public Button shipButton;
 
         [SerializeField]
@@ -59,11 +66,19 @@ public class PackingArea : MonoBehaviour
 
         public void RefreshUI()
         {
+            // Legacy Slider support (horizontal bars)
             if (slider != null)
             {
                 slider.minValue = 0f;
                 slider.maxValue = capacityTonnes > 0f ? capacityTonnes : 1f;
                 slider.value = currentTonnes;
+            }
+
+            // Preferred Image fill support (works for vertical or horizontal Filled Images)
+            if (fillImage != null)
+            {
+                float denom = capacityTonnes > 0f ? capacityTonnes : 1f;
+                fillImage.fillAmount = Mathf.Clamp01(currentTonnes / denom);
             }
 
             if (label != null)
