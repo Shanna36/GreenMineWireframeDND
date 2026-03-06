@@ -269,6 +269,7 @@ public class PackingArea : MonoBehaviour
     /// </summary>
     public void Ship(OutputType type)
     {
+         Debug.Log("SHIP BUTTON CLICKED: " + type);
         var hopper = hoppers.Find(h => h != null && h.type == type);
         if (hopper == null) return;
 
@@ -342,6 +343,35 @@ public class PackingArea : MonoBehaviour
         {
             Debug.Log("DumpResidueClicked: Dump failed (insufficient funds or missing MoneyManager).");
         }
+    }
+
+    // --- UI Button wrappers for shipping ---
+    // Unity Button OnClick cannot pass enum parameters, so these
+    // wrappers allow each material button to call Ship() correctly.
+
+    public void ShipFibreClicked()
+    {
+        Ship(OutputType.Fibre);
+    }
+
+    public void ShipPlasticsClicked()
+    {
+        Ship(OutputType.Plastics);
+    }
+
+    public void ShipAluminiumClicked()
+    {
+        Ship(OutputType.Aluminium);
+    }
+
+    public void ShipSteelClicked()
+    {
+        Ship(OutputType.Steel);
+    }
+
+    public void ShipResidueClicked()
+    {
+        Ship(OutputType.Residue);
     }
 
     private void OnTriggerEnter(Collider other)
