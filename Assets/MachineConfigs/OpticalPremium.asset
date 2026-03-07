@@ -15,7 +15,7 @@ MonoBehaviour:
   machineName: OpticalPremium
   machineType: 0
   tier: 3
-  cost: 800
+  cost: 3200
   throughputTonnesPerHour: 30
   contaminationPercent: 0
   machinePrefab: {fileID: 4423934949682421681, guid: 14caf564376754c9facde9afcf76e7ea, type: 3}

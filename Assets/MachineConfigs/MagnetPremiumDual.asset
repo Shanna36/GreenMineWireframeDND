@@ -15,7 +15,7 @@ MonoBehaviour:
   machineName: MagneticSorterDualStage
   machineType: 3
   tier: 3
-  cost: 800
+  cost: 2600
   throughputTonnesPerHour: 30
   contaminationPercent: 0.001
   machinePrefab: {fileID: 6678583249558523325, guid: 12b1d6bc9f0a24e209f88c7567d65cf3, type: 3}

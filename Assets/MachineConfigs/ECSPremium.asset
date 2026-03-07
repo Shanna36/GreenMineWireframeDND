@@ -15,7 +15,7 @@ MonoBehaviour:
   machineName: ECSPremium
   machineType: 1
   tier: 3
-  cost: 5000
+  cost: 3500
   throughputTonnesPerHour: 30
   contaminationPercent: 0
   machinePrefab: {fileID: 6109818219244238331, guid: c2ff5aecb175d4b948454bf12447a44e, type: 3}

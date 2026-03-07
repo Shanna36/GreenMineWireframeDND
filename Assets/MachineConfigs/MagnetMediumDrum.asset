@@ -15,7 +15,7 @@ MonoBehaviour:
   machineName: DrumMagnetMedium
   machineType: 3
   tier: 2
-  cost: 600
+  cost: 1200
   throughputTonnesPerHour: 20
   contaminationPercent: 0.1
   machinePrefab: {fileID: 3627095476544072267, guid: 5f5c0d98e0da24c2caf3da79d75c7f4d, type: 3}
