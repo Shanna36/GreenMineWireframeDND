@@ -26,6 +26,8 @@ public class MachineSlot : MonoBehaviour
 
     private GameObject currentMachineInstance;
     private int currentIndex = -1;           // Selected option index
+    // Expose the selected option index (0 = Basic, 1 = Medium, 2 = Premium)
+    public int CurrentIndex => currentIndex;
 
 
 

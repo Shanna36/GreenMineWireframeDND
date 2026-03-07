@@ -41,6 +41,17 @@ public class PackingArea : MonoBehaviour
         [Tooltip("Preferred: assign the Image that should fill (set its Image Type to Filled).")]
         public Image fillImage;
 
+        [Header("Near Full Glow")]
+        [Tooltip("When the hopper is this full (fraction of capacity), start pulsing the bar colour.")]
+        [Range(0.5f, 1f)]
+        public float nearFullThreshold = 0.9f;
+
+        [Tooltip("Colour used for the pulse when near full.")]
+        public Color nearFullColor = Color.yellow;
+
+        [Tooltip("Speed of the pulse animation.")]
+        public float pulseSpeed = 3f;
+
         [Tooltip("Optional text (e.g., '0 / 2 t').")]
         public TMP_Text label;
 
@@ -78,7 +89,19 @@ public class PackingArea : MonoBehaviour
             if (fillImage != null)
             {
                 float denom = capacityTonnes > 0f ? capacityTonnes : 1f;
-                fillImage.fillAmount = Mathf.Clamp01(currentTonnes / denom);
+                float fill = Mathf.Clamp01(currentTonnes / denom);
+                fillImage.fillAmount = fill;
+
+                // Normal colour is green. When nearly full, pulse toward yellow.
+                if (fill >= nearFullThreshold)
+                {
+                    float pulse = Mathf.PingPong(Time.time * pulseSpeed, 1f);
+                    fillImage.color = Color.Lerp(Color.green, nearFullColor, pulse);
+                }
+                else
+                {
+                    fillImage.color = Color.green;
+                }
             }
 
             if (label != null)
@@ -88,7 +111,7 @@ public class PackingArea : MonoBehaviour
 
             if (shipButton != null)
             {
-                // v1 behaviour: only allow shipping when full.
+                // Allow shipping whenever there is material in the hopper.
                 // Events can temporarily disable shipping (e.g. transport breakdown).
                 bool globallyDisabled = PackingArea.Instance != null && PackingArea.Instance.IsShippingDisabled;
 
@@ -98,7 +121,7 @@ public class PackingArea : MonoBehaviour
                     playerOk = PackingArea.Instance.IsPlayerInShippingZone;
                 }
 
-                shipButton.interactable = IsFull && !globallyDisabled && playerOk;
+                shipButton.interactable = currentTonnes > 0f && !globallyDisabled && playerOk;
             }
         }
     }
@@ -287,8 +310,8 @@ public class PackingArea : MonoBehaviour
             return;
         }
 
-        // v1: only ship if full (matches button interactable)
-        if (!hopper.IsFull) return;
+        // Allow shipping whenever there is material in the hopper
+        if (hopper.CurrentTonnes <= 0f) return;
 
         float tonnes = hopper.CurrentTonnes;
         hopper.Clear();
@@ -342,7 +365,17 @@ public class PackingArea : MonoBehaviour
         if (!paid)
         {
             Debug.Log("DumpResidueClicked: Dump failed (insufficient funds or missing MoneyManager).");
+            return;
         }
+
+        // Clear the residue hopper when dumping
+        var residue = hoppers.Find(h => h != null && h.type == OutputType.Residue);
+        if (residue != null)
+        {
+            residue.Clear();
+        }
+
+        RefreshAllUI();
     }
 
     // --- UI Button wrappers for shipping ---

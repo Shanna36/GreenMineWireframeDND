@@ -7,6 +7,7 @@ public class GameStateManager : MonoBehaviour
     public enum GameState
     {
         Playing,
+        Won,
         Lost
     }
 
@@ -25,6 +26,10 @@ public class GameStateManager : MonoBehaviour
     [Tooltip("How many seconds the line can be stalled (0 throughput) before the player loses")]
     public float stallSecondsToLose = 20f;
 
+    [Header("Win Condition")]
+    [Tooltip("Number of premium machines required to win the game")]
+    public int premiumMachinesToWin = 3;
+
     private GameState currentState = GameState.Playing;
     private float stallTimer = 0f;
 
@@ -33,7 +38,7 @@ public class GameStateManager : MonoBehaviour
 
     private bool hasEverRun = false;
 
-    // Throttled diagnostics (unscaled) so we can see early-return causes even if the Console is noisy.
+    // Throttled diagnostics (unscaled) so I can see early-return causes even if the Console is noisy.
     private float _nextDiagUnscaledTime = 0f;
 
     private void Start()
@@ -116,6 +121,26 @@ public class GameStateManager : MonoBehaviour
             return;
         }
 
+        // Win condition: player installs enough premium machines
+        if (throughputAggregator.machineSlots != null)
+        {
+            int premiumCount = 0;
+
+            foreach (var slot in throughputAggregator.machineSlots)
+            {
+                if (slot != null && slot.CurrentIndex == 2) // 2 = Premium
+                {
+                    premiumCount++;
+                }
+            }
+
+            if (premiumCount >= premiumMachinesToWin)
+            {
+                Win();
+                return;
+            }
+        }
+
         // If total throughput is zero or less, the line is stalled
         if (totalTph <= 0f)
         {
@@ -145,6 +170,31 @@ public class GameStateManager : MonoBehaviour
         Debug.Log($"GAME OVER: {reason}");
 
         // Ensure any existing event popup is hidden before showing Game Over
+        if (eventManager != null && eventManager.popupUI != null)
+        {
+            eventManager.popupUI.Hide();
+        }
+
+        if (gameOverRoot != null)
+        {
+            gameOverRoot.SetActive(true);
+            gameOverRoot.transform.SetAsLastSibling();
+        }
+
+        // Pause the game
+        Time.timeScale = 0f;
+    }
+
+    public void Win()
+    {
+        if (currentState == GameState.Won)
+            return;
+
+        currentState = GameState.Won;
+
+        Debug.Log("YOU WIN! Three premium machines installed.");
+
+        // Hide any active event popup
         if (eventManager != null && eventManager.popupUI != null)
         {
             eventManager.popupUI.Hide();
