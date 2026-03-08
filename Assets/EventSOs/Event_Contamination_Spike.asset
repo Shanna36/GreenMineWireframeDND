@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EventDefinitionSO
   eventId: E02
   eventName: Contamination Spike
-  playerPrompt: 'Contaminants are mixing into the stream. Shipment value is reduced
-    temporarily.
+  playerPrompt: 'Oops-- someone forgot to rinse out their plastic containers and
+    it''s affecting your contmaination! Shipment value is reduced temporarily.
 
 '
   actionText: Call in extra sorters

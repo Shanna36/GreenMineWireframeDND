@@ -14,10 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EventDefinitionSO
   eventId: E05
   eventName: Shift Delay
-  playerPrompt: Icy Roads are amking hard for workers to get in to the faccility.
-    You can pay people overtime to extend their shift or just wait for the others
-    to arrive
-  actionText: Hire Replacement Truck
+  playerPrompt: Icy Roads are making hard for workers to get  to the facility. You
+    can pay people overtime to extend their shift or just wait for the others to
+    arrive
+  actionText: Pay Overtime
   eventType: 0
   targetType: 0
   targetId: Default

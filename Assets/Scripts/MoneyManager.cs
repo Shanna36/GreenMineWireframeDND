@@ -31,13 +31,15 @@ public class MoneyManager : MonoBehaviour
     public int aluminiumPerTonne = 150;
 
     [Header("Residue")]
-    public int dumpCostPerDump = 500;
+    public int dumpCostPerDump = 100;
 
     [Header("Contamination")]
     [Tooltip("Each 1% contamination reduces value by this fraction (0.1 = 10% per 1%)")]
     public float valueLossPerPercent = 0.1f;
 
     public int CurrentCoins { get; private set; }
+    // Compatibility property so UI or gameplay scripts can read money as "CurrentMoney"
+    public int CurrentMoney => CurrentCoins;
     // newBalance, delta, payType, label
     public event System.Action<int, int, PayType, string> OnBalanceChanged;
 
