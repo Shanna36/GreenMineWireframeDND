@@ -13,7 +13,7 @@ public class MachineButtonUI : MonoBehaviour
         UpdateButton();
     }
 
-    void Update()
+        void OnEnable()
     {
         UpdateButton();
     }
@@ -33,6 +33,6 @@ public class MachineButtonUI : MonoBehaviour
         button.interactable = canAfford;
 
         // Optional: make price red if unaffordable
-        priceText.color = canAfford ? Color.white : Color.red;
+        priceText.color = canAfford ? Color.black : Color.red;
     }
 }
