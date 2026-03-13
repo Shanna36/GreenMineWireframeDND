@@ -11,8 +11,8 @@ using UnityEngine.UI;
 /// - When a hopper is shipped, it delegates payout logic to MoneyManager.
 ///
 /// NOTE: Money is owned by MoneyManager (single source of truth).
-/// - Requires a Collider with IsTrigger enabled to detect when the player is in the shipping zone.
-/// </summary>
+///Changing trigger behaviour to make character travel to each material's hopper (forthcoming 13/3/26)
+/// /// </summary>
 public class PackingArea : MonoBehaviour
 {
     public enum OutputType { Fibre, Plastics, Aluminium, Steel, Residue }

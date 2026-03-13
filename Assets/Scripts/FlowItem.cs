@@ -10,20 +10,34 @@ public class FlowItem : MonoBehaviour
     [SerializeField] private float moveSpeed = 1.5f;
     [SerializeField] private float arriveDistance = 0.05f;
 
-    private void Start()
-    {
-        if (currentPath == null || currentPath.WaypointCount == 0)
-        {
-            Debug.LogWarning($"[FlowItem] No valid path assigned on '{name}'.");
-            enabled = false;
-            return;
-        }
+    [Header("Lifetime")]
+    [SerializeField] private float lifespanSeconds = -1f;
 
-        transform.position = currentPath.GetWaypointPosition(waypointIndex);
-    }
+    private float lifeTimer;
+
+    [Header("Spawn Variation")]
+    [SerializeField] private float randomYRotationMin = -15f;
+    [SerializeField] private float randomYRotationMax = 15f;
+    [SerializeField] private float randomXOffsetMin = -0.15f;
+    [SerializeField] private float randomXOffsetMax = 0.15f;
+
+    private float currentXOffset;
+
+    private FlowItemPool owningPool;
 
     private void Update()
     {
+        if (lifespanSeconds > 0f)
+        {
+            lifeTimer -= Time.deltaTime;
+
+            if (lifeTimer <= 0f)
+            {
+                ReturnToPool();
+                return;
+            }
+        }
+
         if (currentPath == null || currentPath.WaypointCount == 0)
             return;
 
@@ -34,6 +48,7 @@ public class FlowItem : MonoBehaviour
         }
 
         Vector3 targetPosition = currentPath.GetWaypointPosition(waypointIndex);
+        targetPosition.x += currentXOffset;
 
         transform.position = Vector3.MoveTowards(
             transform.position,
@@ -61,8 +76,7 @@ public class FlowItem : MonoBehaviour
         }
         else
         {
-            Debug.Log($"[FlowItem] '{name}' reached end of path.");
-            enabled = false;
+            ReturnToPool();
         }
     }
 
@@ -73,12 +87,56 @@ public class FlowItem : MonoBehaviour
 
         if (currentPath != null && currentPath.WaypointCount > 0)
         {
-            transform.position = currentPath.GetWaypointPosition(0);
+            Vector3 startPosition = currentPath.GetWaypointPosition(0);
+            startPosition.x += currentXOffset;
+            transform.position = startPosition;
             enabled = true;
         }
         else
         {
-            enabled = false;
+            ReturnToPool();
+        }
+    }
+
+    public void BeginFlow(FlowPath path)
+    {
+        lifeTimer = lifespanSeconds;
+        SetPath(path);
+        ApplySpawnVariation();
+    }
+
+    private void ApplySpawnVariation()
+    {
+        float randomY = Random.Range(randomYRotationMin, randomYRotationMax);
+        //transform.rotation = Quaternion.Euler(0f, randomY, 0f);
+
+        currentXOffset = Random.Range(randomXOffsetMin, randomXOffsetMax);
+
+        Vector3 position = transform.position;
+        position.x += currentXOffset;
+        transform.position = position;
+    }
+
+    public void SetOwningPool(FlowItemPool pool)
+    {
+        owningPool = pool;
+    }
+
+    public void ReturnToPool()
+    {
+        currentPath = null;
+        waypointIndex = 0;
+        enabled = false;
+        lifeTimer = 0f;
+        currentXOffset = 0f;
+
+        if (owningPool != null)
+        {
+            owningPool.ReturnItem(this);
+        }
+        else
+        {
+            gameObject.SetActive(false);
         }
     }
 }

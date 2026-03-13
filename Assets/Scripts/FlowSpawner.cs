@@ -3,7 +3,7 @@ using UnityEngine;
 public class FlowSpawner : MonoBehaviour
 {
     [Header("Spawn Setup")]
-    [SerializeField] private FlowItem[] flowItemPrefabs;
+    [SerializeField] private FlowItemPool[] itemPools;
     [SerializeField] private FlowPath spawnPath;
 
     [Header("Timing")]
@@ -24,7 +24,7 @@ public class FlowSpawner : MonoBehaviour
 
     private void Update()
     {
-        if (flowItemPrefabs == null || flowItemPrefabs.Length == 0 || spawnPath == null)
+        if (itemPools == null || itemPools.Length == 0 || spawnPath == null)
             return;
 
         spawnTimer -= Time.deltaTime;
@@ -38,16 +38,16 @@ public class FlowSpawner : MonoBehaviour
 
     private void SpawnItem()
     {
-        if (flowItemPrefabs == null || flowItemPrefabs.Length == 0)
+        if (itemPools == null || itemPools.Length == 0)
             return;
 
-        int randomIndex = Random.Range(0, flowItemPrefabs.Length);
-        FlowItem selectedPrefab = flowItemPrefabs[randomIndex];
+        int randomIndex = Random.Range(0, itemPools.Length);
+        FlowItemPool selectedPool = itemPools[randomIndex];
 
-        if (selectedPrefab == null)
+        if (selectedPool == null)
             return;
 
-        FlowItem newItem = Instantiate(selectedPrefab, transform.position, Quaternion.identity);
-        newItem.SetPath(spawnPath);
+        FlowItem newItem = selectedPool.GetItem();
+        newItem.BeginFlow(spawnPath);
     }
 }
