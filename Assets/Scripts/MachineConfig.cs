@@ -46,4 +46,4 @@ public class MachineConfig : ScriptableObject
     public GameObject machinePrefab;
 }
 
-/// moved MachineType enum to its own file MachineType.cs so both MachineSlot and MachineConfig can use it
+// NOTE: MachineType enum/class is defined in MachineType.cs

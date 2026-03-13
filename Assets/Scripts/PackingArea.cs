@@ -57,6 +57,10 @@ public class PackingArea : MonoBehaviour
 
         public Button shipButton;
 
+        [Header("Per-Hopper Shipping Zone")]
+        [Tooltip("Optional trigger collider for this specific hopper. When assigned, the ship button only activates while the player is near this hopper.")]
+        public Collider shippingZoneTrigger;
+
         [SerializeField]
         private float currentTonnes = 0f;
 
@@ -114,11 +118,10 @@ public class PackingArea : MonoBehaviour
                 // Allow shipping whenever there is material in the hopper.
                 // Events can temporarily disable shipping (e.g. transport breakdown).
                 bool globallyDisabled = PackingArea.Instance != null && PackingArea.Instance.IsShippingDisabled;
-
                 bool playerOk = true;
                 if (PackingArea.Instance != null && PackingArea.Instance.requirePlayerInZoneToShip)
                 {
-                    playerOk = PackingArea.Instance.IsPlayerInShippingZone;
+                    playerOk = PackingArea.Instance.IsPlayerInHopperZone(this);
                 }
 
                 shipButton.interactable = currentTonnes > 0f && !globallyDisabled && playerOk;
@@ -137,20 +140,16 @@ public class PackingArea : MonoBehaviour
     public bool blockWhenAnyFull = true;
 
     [Header("Shipping Zone")]
-    [Tooltip("Only allow shipping when the player is inside this PackingArea's trigger collider.")]
+    [Tooltip("If true, each ship button only activates when the player is near that hopper's assigned shipping zone collider.")]
     [SerializeField] private bool requirePlayerInZoneToShip = true;
 
-    [Tooltip("Tag used to identify the player object for the shipping zone trigger.")]
+    [Tooltip("Tag used to identify the player object for hopper shipping zone checks.")]
     [SerializeField] private string playerTag = "Player";
 
-    // Tracks which colliders belonging to the player are currently inside the packing/dispatch trigger zone.
-    // Using a set avoids getting "stuck" if we receive multiple enter events.
-    private readonly HashSet<Collider> playerCollidersInside = new HashSet<Collider>();
+    [Tooltip("Optional explicit player root transform. Leave empty to find by tag at runtime.")]
+    [SerializeField] private Transform playerRoot;
 
-    /// <summary>
-    /// True when the player is currently inside the packing/dispatch trigger zone.
-    /// </summary>
-    public bool IsPlayerInShippingZone => playerCollidersInside.Count > 0;
+    private Collider[] cachedPlayerColliders = Array.Empty<Collider>();
 
     [Tooltip("If you don't have contamination flowing through the sim yet, keep this at 0.")]
     [Range(0f, 1f)]
@@ -176,8 +175,7 @@ public class PackingArea : MonoBehaviour
 
     private void OnEnable()
     {
-        // Safety: ensure we don't carry any stale trigger state.
-        playerCollidersInside.Clear();
+        CachePlayerReferences();
         RefreshAllUI();
     }
 
@@ -303,10 +301,10 @@ public class PackingArea : MonoBehaviour
             return;
         }
 
-        // If we require the player to be in the dispatch zone, block shipping when they're outside it.
-        if (requirePlayerInZoneToShip && !IsPlayerInShippingZone)
+        // If we require the player to be near this hopper's own shipping zone, block shipping when they're outside it.
+        if (requirePlayerInZoneToShip && !IsPlayerInHopperZone(hopper))
         {
-            Debug.Log($"Ship blocked: player is not in the packing/dispatch zone. ({type})");
+            Debug.Log($"Ship blocked: player is not near the assigned hopper shipping zone. ({type})");
             return;
         }
 
@@ -407,33 +405,55 @@ public class PackingArea : MonoBehaviour
         Ship(OutputType.Residue);
     }
 
-    private void OnTriggerEnter(Collider other)
+
+    private void CachePlayerReferences()
     {
-        if (!requirePlayerInZoneToShip) return;
-        if (other == null) return;
-
-        // Many character setups tag the root "Player" object, while the collider lives on a child.
-        bool isPlayer = other.CompareTag(playerTag) || other.transform.root.CompareTag(playerTag);
-        if (!isPlayer) return;
-
-        if (playerCollidersInside.Add(other))
+        if (playerRoot == null)
         {
-            RefreshAllUI();
+            var playerObject = GameObject.FindGameObjectWithTag(playerTag);
+            if (playerObject != null)
+            {
+                playerRoot = playerObject.transform;
+            }
+        }
+
+        if (playerRoot != null)
+        {
+            cachedPlayerColliders = playerRoot.GetComponentsInChildren<Collider>(true);
+        }
+        else
+        {
+            cachedPlayerColliders = Array.Empty<Collider>();
         }
     }
 
-    private void OnTriggerExit(Collider other)
+    public bool IsPlayerInHopperZone(Hopper hopper)
     {
-        if (!requirePlayerInZoneToShip) return;
-        if (other == null) return;
+        if (!requirePlayerInZoneToShip)
+            return true;
 
-        bool isPlayer = other.CompareTag(playerTag) || other.transform.root.CompareTag(playerTag);
-        if (!isPlayer) return;
+        if (hopper == null)
+            return false;
 
-        if (playerCollidersInside.Remove(other))
+        if (hopper.shippingZoneTrigger == null)
+            return true;
+
+        if (playerRoot == null || cachedPlayerColliders == null || cachedPlayerColliders.Length == 0)
         {
-            RefreshAllUI();
+            CachePlayerReferences();
         }
+
+        if (hopper.shippingZoneTrigger == null || playerRoot == null)
+            return false;
+
+        foreach (var playerCollider in cachedPlayerColliders)
+        {
+            if (playerCollider == null) continue;
+            if (hopper.shippingZoneTrigger.bounds.Intersects(playerCollider.bounds))
+                return true;
+        }
+
+        return hopper.shippingZoneTrigger.bounds.Contains(playerRoot.position);
     }
 
     private MaterialType GetMaterialType(OutputType type)

@@ -3351,6 +3351,7 @@ MonoBehaviour:
     pulseSpeed: 3
     label: {fileID: 0}
     shipButton: {fileID: 33117989}
+    shippingZoneTrigger: {fileID: 1753761451}
     currentTonnes: 0
   - type: 1
     fraction: 0.3
@@ -3362,6 +3363,7 @@ MonoBehaviour:
     pulseSpeed: 3
     label: {fileID: 0}
     shipButton: {fileID: 547829165}
+    shippingZoneTrigger: {fileID: 1722051233}
     currentTonnes: 0
   - type: 2
     fraction: 0.05
@@ -3373,6 +3375,7 @@ MonoBehaviour:
     pulseSpeed: 3
     label: {fileID: 0}
     shipButton: {fileID: 503327518}
+    shippingZoneTrigger: {fileID: 1334774883}
     currentTonnes: 0
   - type: 3
     fraction: 0.15
@@ -3384,6 +3387,7 @@ MonoBehaviour:
     pulseSpeed: 3
     label: {fileID: 0}
     shipButton: {fileID: 1894928611}
+    shippingZoneTrigger: {fileID: 274020185}
     currentTonnes: 0
   - type: 4
     fraction: 0.1
@@ -3395,10 +3399,12 @@ MonoBehaviour:
     pulseSpeed: 3
     label: {fileID: 0}
     shipButton: {fileID: 423220042}
+    shippingZoneTrigger: {fileID: 885832232}
     currentTonnes: 0
   blockWhenAnyFull: 1
   requirePlayerInZoneToShip: 1
   playerTag: Player
+  playerRoot: {fileID: 0}
   defaultContaminationRate: 0
   dumpCostPerDump: 100
 --- !u!114 &356975901
@@ -5445,7 +5451,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 342443861930479886, guid: 837b47e8f4f144cd4bff376e17bea0be, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -16.99
+      value: -18.5
       objectReference: {fileID: 0}
     - target: {fileID: 342443861930479886, guid: 837b47e8f4f144cd4bff376e17bea0be, type: 3}
       propertyPath: m_LocalPosition.y
@@ -5453,7 +5459,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 342443861930479886, guid: 837b47e8f4f144cd4bff376e17bea0be, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 13.6628
+      value: 13.73
       objectReference: {fileID: 0}
     - target: {fileID: 342443861930479886, guid: 837b47e8f4f144cd4bff376e17bea0be, type: 3}
       propertyPath: m_LocalRotation.w
@@ -15648,7 +15654,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: d1bd4d3b5d6ee40e094d2b80b32029e3, type: 3}
       propertyPath: m_Name
-      value: SimpleHopper (1)
+      value: Residue_Hopper
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -18229,7 +18235,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1120070624007506868, guid: 837b47e8f4f144cd4bff376e17bea0be, type: 3}
       propertyPath: m_Name
-      value: Aluminium_Hopper (1)
+      value: Plastic_hopper
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

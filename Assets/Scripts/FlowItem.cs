@@ -108,7 +108,7 @@ public class FlowItem : MonoBehaviour
     private void ApplySpawnVariation()
     {
         float randomY = Random.Range(randomYRotationMin, randomYRotationMax);
-        //transform.rotation = Quaternion.Euler(0f, randomY, 0f);
+        //transform.rotation = Quaternion.Euler(0f, randomY, 0f);  causing flip issue w/ paper prefab
 
         currentXOffset = Random.Range(randomXOffsetMin, randomXOffsetMax);
 
