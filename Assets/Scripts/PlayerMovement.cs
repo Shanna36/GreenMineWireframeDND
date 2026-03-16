@@ -1,5 +1,6 @@
 using UnityEngine;
 
+[RequireComponent(typeof(CharacterController))]
 public class PlayerMovement : MonoBehaviour
 {
     [Header("Movement")]
@@ -7,23 +8,31 @@ public class PlayerMovement : MonoBehaviour
     [Tooltip("How fast the character turns to face movement direction.")]
     [SerializeField] private float rotationSpeed = 12f;
 
+    [Header("Physics")]
+    [Tooltip("Small downward force to keep the controller grounded. Keep this low for a flat factory floor.")]
+    [SerializeField] private float groundedStickForce = -2f;
+
     [Header("Animation")]
     [Tooltip("Animator on the character root. If left empty, will try GetComponentInChildren<Animator>().")]
     [SerializeField] private Animator animator;
     [Tooltip("Animator parameter used for movement blend (float). Defaults to 'Speed'.")]
     [SerializeField] private string speedParam = "Speed";
 
+    private CharacterController controller;
     private int speedParamHash;
+    private float verticalVelocity;
 
-    void Awake()
+    private void Awake()
     {
+        controller = GetComponent<CharacterController>();
+
         if (animator == null)
             animator = GetComponentInChildren<Animator>();
 
         speedParamHash = Animator.StringToHash(speedParam);
     }
 
-    void Update()
+    private void Update()
     {
         Vector3 movement = GetMovementInput();
         ApplyMovement(movement);
@@ -36,17 +45,14 @@ public class PlayerMovement : MonoBehaviour
         float horizontal = 0f;
         float vertical = 0f;
 
-        // WASD input
         if (Input.GetKey(KeyCode.W)) vertical += 1f;
         if (Input.GetKey(KeyCode.S)) vertical -= 1f;
         if (Input.GetKey(KeyCode.A)) horizontal -= 1f;
         if (Input.GetKey(KeyCode.D)) horizontal += 1f;
 
-        // Arrow key / Input Manager axes (adds support for gamepad too)
         horizontal += Input.GetAxis("Horizontal");
         vertical += Input.GetAxis("Vertical");
 
-        // Move on X and Z axes only (keep Y constant)
         Vector3 movement = new Vector3(horizontal, 0f, vertical);
         if (movement.sqrMagnitude > 1f)
             movement.Normalize();
@@ -56,16 +62,25 @@ public class PlayerMovement : MonoBehaviour
 
     private void ApplyMovement(Vector3 movement)
     {
-        transform.position += movement * moveSpeed * Time.deltaTime;
+        if (controller == null)
+            return;
+
+        if (controller.isGrounded)
+        {
+            verticalVelocity = groundedStickForce;
+        }
+
+        Vector3 finalMovement = movement * moveSpeed;
+        finalMovement.y = verticalVelocity;
+
+        controller.Move(finalMovement * Time.deltaTime);
     }
 
     private void ApplyRotation(Vector3 movement)
     {
-        // Only rotate when we actually have input
         if (movement.sqrMagnitude < 0.0001f)
             return;
 
-        // Face the direction we're moving
         Quaternion targetRotation = Quaternion.LookRotation(movement, Vector3.up);
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
     }
@@ -75,7 +90,6 @@ public class PlayerMovement : MonoBehaviour
         if (animator == null)
             return;
 
-        // 0 when idle, 1 when moving (you can scale this later if you add sprinting)
         float speed01 = Mathf.Clamp01(movement.magnitude);
         animator.SetFloat(speedParamHash, speed01, 0.1f, Time.deltaTime);
     }

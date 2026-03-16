@@ -19,6 +19,11 @@ public class GameStateManager : MonoBehaviour
     [Tooltip("A GameObject (e.g., a Canvas/Panel) to enable on Game Over")]
     public GameObject gameOverRoot;
 
+    [Header("Win UI")]
+    [Tooltip("A GameObject (e.g., a Canvas/Panel) to enable on Win")]
+    public GameObject gameWonRoot;
+
+
     [Tooltip("Reference to EventManager so we can hide its active popup on Game Over")]
     public EventManager eventManager;
 
@@ -28,7 +33,7 @@ public class GameStateManager : MonoBehaviour
 
     [Header("Win Condition")]
     [Tooltip("Number of premium machines required to win the game")]
-    public int premiumMachinesToWin = 3;
+    public int premiumMachinesToWin = 5;
 
     private GameState currentState = GameState.Playing;
     private float stallTimer = 0f;
@@ -36,6 +41,12 @@ public class GameStateManager : MonoBehaviour
     [Header("Debug")]
     public bool debugLog = true;
 
+
+    /// <summary>
+    /// True once the factory has started running at least once, or once the full line is assembled.
+    /// Used to gate systems like events until the player has finished setup.
+    /// </summary>
+    public bool HasGameStarted => hasEverRun;
     private bool hasEverRun = false;
 
     // Throttled diagnostics (unscaled) so I can see early-return causes even if the Console is noisy.
@@ -48,6 +59,13 @@ public class GameStateManager : MonoBehaviour
         currentState = GameState.Playing;
         stallTimer = 0f;
         hasEverRun = false;
+
+        if (gameOverRoot != null)
+            gameOverRoot.SetActive(false);
+
+        if (gameWonRoot != null)
+            gameWonRoot.SetActive(false);
+
     }
 
     private void Update()
@@ -181,6 +199,12 @@ public class GameStateManager : MonoBehaviour
             gameOverRoot.transform.SetAsLastSibling();
         }
 
+        if (gameWonRoot != null)
+        {
+            gameWonRoot.SetActive(false);
+        }
+
+
         // Pause the game
         Time.timeScale = 0f;
     }
@@ -192,7 +216,7 @@ public class GameStateManager : MonoBehaviour
 
         currentState = GameState.Won;
 
-        Debug.Log("YOU WIN! Three premium machines installed.");
+        Debug.Log($"YOU WIN! {premiumMachinesToWin} premium machines installed.");
 
         // Hide any active event popup
         if (eventManager != null && eventManager.popupUI != null)
@@ -202,9 +226,15 @@ public class GameStateManager : MonoBehaviour
 
         if (gameOverRoot != null)
         {
-            gameOverRoot.SetActive(true);
-            gameOverRoot.transform.SetAsLastSibling();
+            gameOverRoot.SetActive(false);
         }
+
+        if (gameWonRoot != null)
+        {
+            gameWonRoot.SetActive(true);
+            gameWonRoot.transform.SetAsLastSibling();
+        }
+
 
         // Pause the game
         Time.timeScale = 0f;

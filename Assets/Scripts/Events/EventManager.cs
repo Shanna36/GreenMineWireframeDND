@@ -171,6 +171,10 @@ public class EventManager : MonoBehaviour
     {
         if (gameStateManager != null && gameStateManager.IsGameOver) return;
 
+        // Do not allow any events until the factory has actually started running.
+        // This prevents debug hotkeys and auto events from firing before all machines are selected.
+        if (gameStateManager != null && !gameStateManager.HasGameStarted) return;
+
         // NOTE: In the Editor, hotkeys only register if the Game view has focus.
 
         if (enableDebugHotkeys)
@@ -410,7 +414,7 @@ public class EventManager : MonoBehaviour
         popupUI?.Show(
             def.eventName,
             def.playerPrompt,
-            def.canPayToBypass ? $"{def.actionText} (£{def.bypassCost})" : "OK",
+            def.canPayToBypass ? $"{def.actionText} ({def.bypassCost})" : "OK",
             PayToBypass,
             "Wait",
             WaitItOut
@@ -543,7 +547,7 @@ public class EventManager : MonoBehaviour
         popupUI?.Show(
             def.eventName,
             def.playerPrompt,
-            def.canPayToBypass ? $"{def.actionText} (£{def.bypassCost})" : "OK",
+            def.canPayToBypass ? $"{def.actionText} ({def.bypassCost})" : "OK",
             PayNow,
             "Delay",
             Delay
@@ -607,7 +611,7 @@ public class EventManager : MonoBehaviour
         popupUI?.Show(
             "Machine Breakdown",
             $"{machineType} has broken down due to delayed maintenance.",
-            $"Repair (£{repairCost})",
+            $"Repair ({repairCost})",
             Repair,
             "Ignore",
             Ignore
@@ -667,7 +671,7 @@ public class EventManager : MonoBehaviour
         popupUI?.Show(
             def.eventName,
             def.playerPrompt,
-            def.canPayToBypass ? $"{def.actionText} (£{def.bypassCost})" : "OK",
+            def.canPayToBypass ? $"{def.actionText} ({def.bypassCost})" : "OK",
             PayToBypass,
             "Wait",
             WaitItOut
