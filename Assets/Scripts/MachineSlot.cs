@@ -45,6 +45,10 @@ public class MachineSlot : MonoBehaviour
     [Tooltip("Optional placeholder visual (e.g., the cube/ghost base) to hide once a machine is installed.")]
     [SerializeField] private GameObject placeholderVisual;
 
+    [Header("Audio (optional)")]
+    [Tooltip("Optional looping machine AudioSource on this MachineSlot. It will start when a machine is installed.")]
+    [SerializeField] private AudioSource machineAudioSource;
+
     // --- Event state (maintenance/breakdown) ---
 
     [SerializeField, Tooltip("If false, this slot is considered stopped by an event (throughput = 0).")]
@@ -178,6 +182,12 @@ public class MachineSlot : MonoBehaviour
         // Ensure a consistent initial state even if the menu is left enabled in the editor.
         SetMenuVisible(false);
         UpdatePlaceholderVisual();
+
+        if (machineAudioSource == null)
+            machineAudioSource = GetComponent<AudioSource>();
+
+        if (machineAudioSource != null)
+            machineAudioSource.Stop();
     }
 
     private void SetMenuVisible(bool isVisible)
@@ -352,6 +362,12 @@ public class MachineSlot : MonoBehaviour
         currentIndex = index;
         UpdatePlaceholderVisual();
 
+        if (machineAudioSource == null)
+            machineAudioSource = GetComponent<AudioSource>();
+
+        if (machineAudioSource != null && !machineAudioSource.isPlaying)
+            machineAudioSource.Play();
+
         // Installing/changing a machine returns it to normal operation.
         isOperational = true;
         throughputMultiplier = 1f;
@@ -411,6 +427,8 @@ public class MachineSlot : MonoBehaviour
         isOperational = false;
         throughputMultiplier = 0f;
         SetWarningState(false);
+        if (machineAudioSource != null)
+            machineAudioSource.Pause();
         OnOperationalChanged?.Invoke(this, isOperational);
         OnSelectionChanged?.Invoke(this);
     }
@@ -420,6 +438,11 @@ public class MachineSlot : MonoBehaviour
         isOperational = true;
         throughputMultiplier = 1f;
         SetWarningState(false);
+        if (machineAudioSource == null)
+            machineAudioSource = GetComponent<AudioSource>();
+
+        if (machineAudioSource != null && HasMachineInstalled && !machineAudioSource.isPlaying)
+            machineAudioSource.Play();
         OnOperationalChanged?.Invoke(this, isOperational);
         OnSelectionChanged?.Invoke(this);
     }

@@ -70,7 +70,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 6fbd5a97990614e3fb522fa1cef87f64, type: 2}
     - target: {fileID: 919132149155446097, guid: ede50d33f0fd24050923a65ab4702777, type: 3}
       propertyPath: m_Name
-      value: BlackTray
+      value: BlackTray 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -102,7 +102,7 @@ MonoBehaviour:
   moveSpeed: 1
   arriveDistance: 0.05
   lifespanSeconds: 50
-  randomYRotationMin: -15
-  randomYRotationMax: 15
+  randomYRotationMin: -20
+  randomYRotationMax: 20
   randomXOffsetMin: -0.15
   randomXOffsetMax: 0.15

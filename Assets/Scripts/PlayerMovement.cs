@@ -10,7 +10,7 @@ public class PlayerMovement : MonoBehaviour
 
     [Header("Physics")]
     [Tooltip("Small downward force to keep the controller grounded. Keep this low for a flat factory floor.")]
-    [SerializeField] private float groundedStickForce = -2f;
+    [SerializeField] private float groundedStickForce = -0.1f;
 
     [Header("Animation")]
     [Tooltip("Animator on the character root. If left empty, will try GetComponentInChildren<Animator>().")]
@@ -65,7 +65,7 @@ public class PlayerMovement : MonoBehaviour
         if (controller == null)
             return;
 
-        if (controller.isGrounded)
+        if (controller.isGrounded && verticalVelocity < 0f)
         {
             verticalVelocity = groundedStickForce;
         }
