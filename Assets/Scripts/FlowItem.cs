@@ -21,7 +21,7 @@ public class FlowItem : MonoBehaviour
     [SerializeField] private float randomXOffsetMin = -0.15f;
     [SerializeField] private float randomXOffsetMax = 0.15f;
 
-    private float currentXOffset;
+    private float currentLateralOffset;
 
     private FlowItemPool owningPool;
 
@@ -47,8 +47,7 @@ public class FlowItem : MonoBehaviour
             return;
         }
 
-        Vector3 targetPosition = currentPath.GetWaypointPosition(waypointIndex);
-        targetPosition.x += currentXOffset;
+        Vector3 targetPosition = GetOffsetWaypointPosition(waypointIndex);
 
         transform.position = Vector3.MoveTowards(
             transform.position,
@@ -87,8 +86,7 @@ public class FlowItem : MonoBehaviour
 
         if (currentPath != null && currentPath.WaypointCount > 0)
         {
-            Vector3 startPosition = currentPath.GetWaypointPosition(0);
-            startPosition.x += currentXOffset;
+            Vector3 startPosition = GetOffsetWaypointPosition(0);
             transform.position = startPosition;
             enabled = true;
         }
@@ -108,13 +106,32 @@ public class FlowItem : MonoBehaviour
     private void ApplySpawnVariation()
     {
         float randomY = Random.Range(randomYRotationMin, randomYRotationMax);
-        //transform.rotation = Quaternion.Euler(0f, randomY, 0f);  causing flip issue w/ paper prefab
+        Vector3 currentEuler = transform.eulerAngles;
+        transform.rotation = Quaternion.Euler(currentEuler.x, randomY, currentEuler.z);
 
-        currentXOffset = Random.Range(randomXOffsetMin, randomXOffsetMax);
+        currentLateralOffset = Random.Range(randomXOffsetMin, randomXOffsetMax);
+    }
 
-        Vector3 position = transform.position;
-        position.x += currentXOffset;
-        transform.position = position;
+    private Vector3 GetOffsetWaypointPosition(int index)
+    {
+        Vector3 basePosition = currentPath.GetWaypointPosition(index);
+
+        Vector3 segmentDirection;
+        if (index + 1 < currentPath.WaypointCount)
+        {
+            segmentDirection = (currentPath.GetWaypointPosition(index + 1) - basePosition).normalized;
+        }
+        else if (index > 0)
+        {
+            segmentDirection = (basePosition - currentPath.GetWaypointPosition(index - 1)).normalized;
+        }
+        else
+        {
+            segmentDirection = Vector3.forward;
+        }
+
+        Vector3 lateralDirection = Vector3.Cross(Vector3.up, segmentDirection).normalized;
+        return basePosition + (lateralDirection * currentLateralOffset);
     }
 
     public void SetOwningPool(FlowItemPool pool)
@@ -128,7 +145,7 @@ public class FlowItem : MonoBehaviour
         waypointIndex = 0;
         enabled = false;
         lifeTimer = 0f;
-        currentXOffset = 0f;
+        currentLateralOffset = 0f;
 
         if (owningPool != null)
         {

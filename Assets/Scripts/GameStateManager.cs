@@ -146,11 +146,19 @@ public class GameStateManager : MonoBehaviour
 
             foreach (var slot in throughputAggregator.machineSlots)
             {
-                if (slot != null && slot.CurrentIndex == 2) // 2 = Premium
+                if (slot == null || !slot.HasMachineInstalled)
+                    continue;
+
+                if (slot.CurrentIndex == 2) // 2 = Premium
                 {
                     premiumCount++;
+                    if (debugLog)
+                        Debug.Log($"[GSM] Premium machine counted on slot '{slot.name}'. CurrentIndex={slot.CurrentIndex}");
                 }
             }
+
+            if (debugLog)
+                Debug.Log($"[GSM] Premium count = {premiumCount}/{premiumMachinesToWin}");
 
             if (premiumCount >= premiumMachinesToWin)
             {

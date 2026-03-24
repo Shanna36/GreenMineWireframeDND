@@ -82,7 +82,7 @@ MonoBehaviour:
   moveSpeed: 1
   arriveDistance: 0.05
   lifespanSeconds: 20
-  randomYRotationMin: -100
-  randomYRotationMax: 180
+  randomYRotationMin: -90
+  randomYRotationMax: 90
   randomXOffsetMin: -0.6
   randomXOffsetMax: 0.6
