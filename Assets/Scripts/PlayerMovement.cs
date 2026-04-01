@@ -1,96 +1,112 @@
 using UnityEngine;
 
-[RequireComponent(typeof(CharacterController))]
 public class PlayerMovement : MonoBehaviour
 {
-    [Header("Movement")]
     [SerializeField] private float moveSpeed = 5f;
-    [Tooltip("How fast the character turns to face movement direction.")]
     [SerializeField] private float rotationSpeed = 12f;
-
-    [Header("Physics")]
-    [Tooltip("Small downward force to keep the controller grounded. Keep this low for a flat factory floor.")]
-    [SerializeField] private float groundedStickForce = -0.1f;
-
-    [Header("Animation")]
-    [Tooltip("Animator on the character root. If left empty, will try GetComponentInChildren<Animator>().")]
+    [SerializeField] private float lockedY = 0f;
+    [SerializeField] private bool useStartingY = true;
     [SerializeField] private Animator animator;
-    [Tooltip("Animator parameter used for movement blend (float). Defaults to 'Speed'.")]
-    [SerializeField] private string speedParam = "Speed";
+    [SerializeField] private string isMovingParameter = "isWalking";
+    [SerializeField] private string speedParameter = "Speed";
+    [SerializeField] private float inputDeadzone = 0.1f;
 
-    private CharacterController controller;
-    private int speedParamHash;
-    private float verticalVelocity;
+    private bool hasAnimator;
+    private Rigidbody rb;
+    private Vector3 moveInput;
+    private Vector3 lastMoveDirection = Vector3.forward;
 
     private void Awake()
     {
-        controller = GetComponent<CharacterController>();
+        rb = GetComponent<Rigidbody>();
+        if (rb == null)
+            rb = gameObject.AddComponent<Rigidbody>();
 
         if (animator == null)
             animator = GetComponentInChildren<Animator>();
 
-        speedParamHash = Animator.StringToHash(speedParam);
+        hasAnimator = animator != null;
+    }
+
+    private void Start()
+    {
+        if (useStartingY)
+            lockedY = transform.position.y;
+
+        rb.useGravity = false;
+        rb.isKinematic = false;
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
+        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+        rb.constraints = RigidbodyConstraints.FreezePositionY |
+                         RigidbodyConstraints.FreezeRotationX |
+                         RigidbodyConstraints.FreezeRotationZ;
+
+        Vector3 startPos = rb.position;
+        startPos.y = lockedY;
+        rb.position = startPos;
+
+        lastMoveDirection = transform.forward.sqrMagnitude > 0.0001f ? transform.forward.normalized : Vector3.forward;
     }
 
     private void Update()
     {
-        Vector3 movement = GetMovementInput();
-        ApplyMovement(movement);
-        ApplyRotation(movement);
-        UpdateAnimation(movement);
+        ReadMovementInput();
+        UpdateAnimation(moveInput.sqrMagnitude > 0.0001f);
     }
 
-    private Vector3 GetMovementInput()
+    private void FixedUpdate()
     {
-        float horizontal = 0f;
-        float vertical = 0f;
+        Vector3 targetVelocity = moveInput * moveSpeed;
+        rb.linearVelocity = new Vector3(targetVelocity.x, 0f, targetVelocity.z);
+        rb.angularVelocity = Vector3.zero;
 
-        if (Input.GetKey(KeyCode.W)) vertical += 1f;
-        if (Input.GetKey(KeyCode.S)) vertical -= 1f;
-        if (Input.GetKey(KeyCode.A)) horizontal -= 1f;
-        if (Input.GetKey(KeyCode.D)) horizontal += 1f;
+        Vector3 pos = rb.position;
+        pos.y = lockedY;
+        rb.position = pos;
 
-        horizontal += Input.GetAxis("Horizontal");
-        vertical += Input.GetAxis("Vertical");
+        if (moveInput.sqrMagnitude > 0.0001f)
+            lastMoveDirection = moveInput;
 
-        Vector3 movement = new Vector3(horizontal, 0f, vertical);
-        if (movement.sqrMagnitude > 1f)
-            movement.Normalize();
-
-        return movement;
-    }
-
-    private void ApplyMovement(Vector3 movement)
-    {
-        if (controller == null)
-            return;
-
-        if (controller.isGrounded && verticalVelocity < 0f)
+        if (lastMoveDirection.sqrMagnitude > 0.0001f)
         {
-            verticalVelocity = groundedStickForce;
+            Quaternion targetRotation = Quaternion.LookRotation(lastMoveDirection, Vector3.up);
+            Quaternion nextRotation = Quaternion.RotateTowards(rb.rotation, targetRotation, rotationSpeed * 360f * Time.fixedDeltaTime);
+            rb.MoveRotation(nextRotation);
         }
-
-        Vector3 finalMovement = movement * moveSpeed;
-        finalMovement.y = verticalVelocity;
-
-        controller.Move(finalMovement * Time.deltaTime);
     }
 
-    private void ApplyRotation(Vector3 movement)
+    private void ReadMovementInput()
     {
-        if (movement.sqrMagnitude < 0.0001f)
-            return;
+        float horizontal = Input.GetAxisRaw("Horizontal");
+        float vertical = Input.GetAxisRaw("Vertical");
 
-        Quaternion targetRotation = Quaternion.LookRotation(movement, Vector3.up);
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotationSpeed * Time.deltaTime);
+        bool wPressed = Input.GetKey(KeyCode.W);
+        bool sPressed = Input.GetKey(KeyCode.S);
+        bool aPressed = Input.GetKey(KeyCode.A);
+        bool dPressed = Input.GetKey(KeyCode.D);
+
+        if (wPressed == sPressed)
+            vertical = Mathf.Abs(vertical) > inputDeadzone ? Mathf.Sign(vertical) : 0f;
+        else
+            vertical = wPressed ? 1f : -1f;
+
+        if (aPressed == dPressed)
+            horizontal = Mathf.Abs(horizontal) > inputDeadzone ? Mathf.Sign(horizontal) : 0f;
+        else
+            horizontal = aPressed ? -1f : 1f;
+
+        moveInput = new Vector3(horizontal, 0f, vertical).normalized;
     }
 
-    private void UpdateAnimation(Vector3 movement)
+    private void UpdateAnimation(bool isMoving)
     {
-        if (animator == null)
+        if (!hasAnimator)
             return;
 
-        float speed01 = Mathf.Clamp01(movement.magnitude);
-        animator.SetFloat(speedParamHash, speed01, 0.1f, Time.deltaTime);
+        if (!string.IsNullOrEmpty(isMovingParameter))
+            animator.SetBool(isMovingParameter, isMoving);
+
+        if (!string.IsNullOrEmpty(speedParameter))
+            animator.SetFloat(speedParameter, isMoving ? 1f : 0f);
     }
 }
