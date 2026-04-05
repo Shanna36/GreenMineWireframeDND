@@ -11,7 +11,7 @@ using UnityEngine.UI;
 /// - When a hopper is shipped, it delegates payout logic to MoneyManager.
 ///
 /// NOTE: Money is owned by MoneyManager (single source of truth).
-///Changing trigger behaviour to make character travel to each material's hopper (forthcoming 13/3/26)
+///Changed trigger behaviour to make character travel to each material's hopper 13/3/26
 /// /// </summary>
 public class PackingArea : MonoBehaviour
 {
